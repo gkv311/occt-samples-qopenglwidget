@@ -189,7 +189,7 @@ namespace
 // ================================================================
 OcctQtViewer::OcctQtViewer (QWidget* theParent)
 : QOpenGLWidget (theParent),
-  myIsCoreProfile (false)
+  myIsCoreProfile (true)
 {
   Handle(Aspect_DisplayConnection) aDisp = new Aspect_DisplayConnection();
   Handle(OpenGl_GraphicDriver) aDriver = new OpenGl_GraphicDriver (aDisp, false);
@@ -238,7 +238,10 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
   aGlFormat.setStencilBufferSize (8);
   //aGlFormat.setOption (QSurfaceFormat::DebugContext, true);
   //aGlFormat.setOption (QSurfaceFormat::DeprecatedFunctions, true);
-  aGlFormat.setVersion (4, 5);
+  if (myIsCoreProfile)
+  {
+    aGlFormat.setVersion (4, 5);
+  }
   aGlFormat.setProfile (myIsCoreProfile ? QSurfaceFormat::CoreProfile : QSurfaceFormat::CompatibilityProfile);
 #if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
   aGlFormat.setColorSpace (QSurfaceFormat::sRGBColorSpace);
