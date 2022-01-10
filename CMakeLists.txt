@@ -1,0 +1,89 @@
+cmake_minimum_required (VERSION 3.2)
+
+project (occt-qopenglwidget-sample)
+
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/adm/cmake" ${CMAKE_MODULE_PATH})
+set (APP_VERSION_MAJOR 1)
+set (APP_VERSION_MINOR 0)
+
+# compiler flags
+set (CMAKE_CXX_STANDARD 11)
+if (MSVC)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:precise /EHa /MP")
+  string (REGEX REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  add_definitions (-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -DUNICODE)
+else()
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -fPIC")
+  add_definitions(-DOCC_CONVERT_SIGNALS)
+endif()
+
+# increase compiler warnings level (-W3 for MSVC, -Wextra for GCC)
+if (MSVC)
+  if (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    string (REGEX REPLACE "/W[0-4]" "/W3" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  else()
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
+  endif()
+elseif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32")
+  endif()
+  if (BUILD_SHARED_LIBS)
+    if (APPLE)
+      set (CMAKE_SHARED_LINKER_FLAGS "-lm ${CMAKE_SHARED_LINKER_FLAGS}")
+    elseif(NOT WIN32)
+      set (CMAKE_SHARED_LINKER_FLAGS "-lm ${CMAKE_SHARED_LINKER_FLAGS}")
+    endif()
+  endif()
+endif()
+
+# Find dependencies
+set (OpenCASCADE_DIR "" CACHE PATH "Path to Open CASCADE libraries.")
+if (MSVC)
+  set (3RDPARTY_DLL_DIRS "" CACHE STRING "Paths to external DLLs separated by semicolon (FreeImage, FreeType, etc.)")
+endif()
+
+# Find OpenGL
+find_package (OpenGL REQUIRED)
+
+# Find Qt5
+set (CMAKE_AUTOUIC ON)
+set (CMAKE_AUTOMOC ON)
+set (CMAKE_AUTORCC ON)
+set_property (GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP "Generated Files/Moc")
+set_property (GLOBAL PROPERTY AUTORCC_SOURCE_GROUP "Generated Files/Resources")
+find_package (Qt5 COMPONENTS Widgets REQUIRED)
+
+# Find Open CASCADE Technology
+find_package (OpenCASCADE REQUIRED)
+if (NOT OpenCASCADE_FOUND)
+  message (FATAL_ERROR "could not find OpenCASCADE, please set OpenCASCADE_DIR variable" )
+else()
+  message (STATUS "Using OpenCASCADE from \"${OpenCASCADE_INSTALL_PREFIX}\"" )
+  message (STATUS "OpenCASCADE_INCLUDE_DIR=${OpenCASCADE_INCLUDE_DIR}")
+  message (STATUS "OpenCASCADE_LIBRARY_DIR=${OpenCASCADE_LIBRARY_DIR}")
+  include_directories(${OpenCASCADE_INCLUDE_DIR})
+  link_directories   (${OpenCASCADE_LIBRARY_DIR})
+endif()
+set (OpenCASCADE_LIBS TKRWMesh TKBinXCAF TKBin TKBinL TKOpenGl TKXCAF TKVCAF TKCAF TKV3d TKHLR TKMesh TKService TKShHealing TKPrim TKTopAlgo TKGeomAlgo TKBRep TKGeomBase TKG3d TKG2d TKMath TKLCAF TKCDF TKernel)
+
+# main project target
+add_executable (${PROJECT_NAME}
+  main.cpp
+  OcctQtViewer.h
+  OcctQtViewer.cpp
+)
+target_link_libraries (${PROJECT_NAME} PRIVATE Qt5::Widgets ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
+
+# auxiliary development environment
+if (MSVC)
+  set (X_COMPILER_BITNESS x64)
+  get_target_property (QtCore_location Qt5::Core LOCATION)
+  get_filename_component (QT_BINARY_DIR ${QtCore_location} DIRECTORY)
+  set (QT_PLUGINS_DIR)
+  if(EXISTS "${QT_BINARY_DIR}/../plugins")
+    set (QT_PLUGINS_DIR "${QT_BINARY_DIR}/../plugins")
+  endif()
+  configure_file("${CMAKE_SOURCE_DIR}/adm/cmake/occt-qopenglwidget-sample.vcxproj.user.in" "${CMAKE_BINARY_DIR}/occt-qopenglwidget-sample.vcxproj.user" @ONLY)
+endif()
