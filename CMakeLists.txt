@@ -73,6 +73,12 @@ add_executable (${PROJECT_NAME}
   main.cpp
   OcctQtViewer.h
   OcctQtViewer.cpp
+  MainWindow.h
+  MainWindow.cpp
+  ParentPage.h
+  ParentPage.cpp
+  MainWindow.ui
+  ParentPage.ui
 )
 target_link_libraries (${PROJECT_NAME} PRIVATE Qt5::Widgets ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
 

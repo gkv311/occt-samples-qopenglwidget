@@ -3,9 +3,16 @@ QT += widgets
 CONFIG += console
 
 # source code of the sample
-HEADERS = OcctQtViewer.h
+HEADERS = OcctQtViewer.h \
+          MainWindow.h \
+          ParentPage.h
 SOURCES = main.cpp \
-          OcctQtViewer.cpp
+          OcctQtViewer.cpp \
+          MainWindow.cpp \
+          ParentPage.cpp
+FORMS = MainWindow.ui \
+        ParentPage.ui
+
 OTHER_FILES = LICENSE.md\
               ReadMe.md \
               custom.pri.template

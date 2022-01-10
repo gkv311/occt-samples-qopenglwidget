@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ParentPage</class>
+ <widget class="QWidget" name="ParentPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>528</width>
+    <height>434</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,8,1">
+   <item>
+    <widget class="QPushButton" name="quit_from_parent_page">
+     <property name="text">
+      <string>Quit from Page</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="parent_widget" native="true"/>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="1">
+      <widget class="QPushButton" name="close_button">
+       <property name="text">
+        <string>Close OCC Widget</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QPushButton" name="show_button">
+       <property name="text">
+        <string>Show OCC Widget</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Delete OCC Widget</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>quit_from_parent_page</sender>
+   <signal>clicked()</signal>
+   <receiver>ParentPage</receiver>
+   <slot>onCloseParentPage()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>262</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>529</x>
+     <y>18</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>show_button</sender>
+   <signal>clicked()</signal>
+   <receiver>ParentPage</receiver>
+   <slot>onShowOcctWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>174</x>
+     <y>415</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>518</x>
+     <y>294</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_button</sender>
+   <signal>clicked()</signal>
+   <receiver>ParentPage</receiver>
+   <slot>onCloseOcctWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>344</x>
+     <y>415</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>156</x>
+     <y>477</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ParentPage</receiver>
+   <slot>onDeleteOcctWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>452</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>582</x>
+     <y>472</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onCloseParentPage()</slot>
+  <slot>onShowOcctWidget()</slot>
+  <slot>onCloseOcctWidget()</slot>
+  <slot>onDeleteOcctWidget()</slot>
+ </slots>
+</ui>

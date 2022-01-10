@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
 #include "OcctQtViewer.h"
+#include "MainWindow.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
@@ -38,81 +39,6 @@
 
 #include <Standard_Version.hxx>
 
-//! Main application window.
-class MyMainWindow : public QMainWindow
-{
-  OcctQtViewer* myViewer;
-public:
-  MyMainWindow() : myViewer (nullptr)
-  {
-    {
-      // menu bar with Quit item
-      QMenuBar* aMenuBar = new QMenuBar();
-      QMenu* aMenuWindow = aMenuBar->addMenu ("&File");
-      QAction* anActionAbout = new QAction (aMenuWindow);
-      anActionAbout->setText ("Quit");
-      aMenuWindow->addAction (anActionAbout);
-      connect (anActionAbout, &QAction::triggered, [this]()
-      {
-        close();
-      });
-      setMenuBar (aMenuBar);
-    }
-    {
-      // 3D Viewer and some controls on top of it
-      myViewer = new OcctQtViewer();
-      QVBoxLayout* aLayout = new QVBoxLayout (myViewer);
-      aLayout->setDirection (QBoxLayout::BottomToTop);
-      aLayout->setAlignment (Qt::AlignBottom);
-      {
-        QPushButton* aQuitBtn = new QPushButton ("About");
-        aLayout->addWidget (aQuitBtn);
-        connect (aQuitBtn, &QPushButton::clicked, [this]()
-        {
-          QMessageBox::information (0, "About Sample", QString()
-                                  + "OCCT 3D Viewer sample embedded into Qt Widgets.\n\n"
-                                  + "Open CASCADE Technology v." OCC_VERSION_STRING_EXT "\n"
-                                  + "Qt v." QT_VERSION_STR "\n\n"
-                                  + "OpenGL info:\n"
-                                  + myViewer->getGlInfo());
-        });
-      }
-      {
-        QWidget* aSliderBox = new QWidget();
-        QHBoxLayout* aSliderLayout = new QHBoxLayout (aSliderBox);
-        {
-          QLabel* aSliderLabel = new QLabel ("Background");
-          aSliderLabel->setStyleSheet ("QLabel { background-color: rgba(0, 0, 0, 0); color: white; }");
-          aSliderLabel->setGeometry (50, 50, 50, 50);
-          aSliderLabel->adjustSize();
-          aSliderLayout->addWidget (aSliderLabel);
-        }
-        {
-          QSlider* aSlider = new QSlider (Qt::Horizontal);
-          aSlider->setRange (0, 255);
-          aSlider->setSingleStep (1);
-          aSlider->setPageStep (15);
-          aSlider->setTickInterval (15);
-          aSlider->setTickPosition (QSlider::TicksRight);
-          aSlider->setValue (0);
-          aSliderLayout->addWidget (aSlider);
-          connect (aSlider, &QSlider::valueChanged, [this](int theValue)
-          {
-            const float aVal = theValue / 255.0f;
-            const Quantity_Color aColor (aVal, aVal, aVal, Quantity_TOC_sRGB);
-            //myViewer->View()->SetBackgroundColor (aColor);
-            myViewer->View()->SetBgGradientColors (aColor, Quantity_NOC_BLACK, Aspect_GradientFillMethod_Elliptical);
-            myViewer->View()->Invalidate();
-            myViewer->update();
-          });
-        }
-        aLayout->addWidget (aSliderBox);
-      }
-      setCentralWidget (myViewer);
-    }
-  }
-};
-
 int main (int theNbArgs, char** theArgVec)
 {
   QApplication aQApp (theNbArgs, theArgVec);
@@ -121,8 +47,8 @@ int main (int theNbArgs, char** theArgVec)
   QCoreApplication::setOrganizationName ("OpenCASCADE");
   QCoreApplication::setApplicationVersion (OCC_VERSION_STRING_EXT);
 
-  MyMainWindow aMainWindow;
-  aMainWindow.resize (aMainWindow.sizeHint());
-  aMainWindow.show();
+  auto *mainwindow = new MainWindow();
+  mainwindow->resize (mainwindow->sizeHint());
+  mainwindow->show();
   return aQApp.exec();
 }

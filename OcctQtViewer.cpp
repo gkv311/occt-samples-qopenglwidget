@@ -266,7 +266,7 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
 // ================================================================
 OcctQtViewer::~OcctQtViewer()
 {
-  //
+  std::cout<<"[OcctQtViewer] destructor called"<<std::endl;
 }
 
 // ================================================================
