@@ -266,7 +266,20 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
 // ================================================================
 OcctQtViewer::~OcctQtViewer()
 {
-  //
+  // hold on X11 display connection till making another connection active by glXMakeCurrent()
+  // to workaround sudden crash in QOpenGLWidget destructor
+  Handle(Aspect_DisplayConnection) aDisp = myViewer->Driver()->GetDisplayConnection();
+
+  // release OCCT viewer
+  myContext->RemoveAll (false);
+  myContext.Nullify();
+  myView->Remove();
+  myView.Nullify();
+  myViewer.Nullify();
+
+  // make active OpenGL context created by Qt
+  makeCurrent();
+  aDisp.Nullify();
 }
 
 // ================================================================
