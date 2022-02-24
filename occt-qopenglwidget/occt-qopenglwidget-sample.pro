@@ -32,6 +32,9 @@ MY_BUILDTYPE =
 CONFIG(debug, debug|release) { MY_BUILDTYPE = d }
 MY_PLATFORM_AND_COMPILER = $$MY_PLATFORM/$$MY_COMPILER
 
+# opengl32 and user32 libs required respectively for wglGetCurrentDC() and WindowFromDC()
+win32:LIBS += -lopengl32 -luser32
+
 # paths to OCCT should be set by custom.pri, see custom.pri.template as example
 exists($$PWD/custom.pri) { include($$PWD/custom.pri) }
 
