@@ -183,6 +183,38 @@ namespace
   }
 }
 
+//! OpenGL FBO subclass for wrapping FBO created by Qt using GL_RGBA8 texture format instead of GL_SRGB8_ALPHA8.
+//! This FBO is set to OpenGl_Context::SetDefaultFrameBuffer() as a final target.
+//! Subclass calls OpenGl_Context::SetFrameBufferSRGB() with sRGB=false flag,
+//! which asks OCCT to disable GL_FRAMEBUFFER_SRGB and apply sRGB gamma correction manually.
+class OcctQtFrameBuffer : public OpenGl_FrameBuffer
+{
+  DEFINE_STANDARD_RTTI_INLINE(OcctQtFrameBuffer, OpenGl_FrameBuffer)
+public:
+  //! Empty constructor.
+  OcctQtFrameBuffer() {}
+
+  //! Make this FBO active in context.
+  virtual void BindBuffer (const Handle(OpenGl_Context)& theGlCtx) override
+  {
+    OpenGl_FrameBuffer::BindBuffer (theGlCtx);
+    theGlCtx->SetFrameBufferSRGB (true, false);
+  }
+
+  //! Make this FBO as drawing target in context.
+  virtual void BindDrawBuffer (const Handle(OpenGl_Context)& theGlCtx) override
+  {
+    OpenGl_FrameBuffer::BindDrawBuffer (theGlCtx);
+    theGlCtx->SetFrameBufferSRGB (true, false);
+  }
+
+  //! Make this FBO as reading source in context.
+  virtual void BindReadBuffer (const Handle(OpenGl_Context)& theGlCtx) override
+  {
+    OpenGl_FrameBuffer::BindReadBuffer (theGlCtx);
+  }
+};
+
 // ================================================================
 // Function : OcctQtViewer
 // Purpose  :
@@ -243,14 +275,17 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
     aGlFormat.setVersion (4, 5);
   }
   aGlFormat.setProfile (myIsCoreProfile ? QSurfaceFormat::CoreProfile : QSurfaceFormat::CompatibilityProfile);
-#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
+
+  // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
+/*#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
   aGlFormat.setColorSpace (QSurfaceFormat::sRGBColorSpace);
   setTextureFormat (GL_SRGB8_ALPHA8);
 #else
   Message::SendWarning ("Warning! Qt 5.10+ is required for sRGB setup.\n"
                         "Colors in 3D Viewer might look incorrect (Qt " QT_VERSION_STR " is used).\n");
   aDriver->ChangeOptions().sRGBDisable = true;
-#endif
+#endif*/
+
   setFormat (aGlFormat);
 
 #if defined(_WIN32)
@@ -490,7 +525,7 @@ void OcctQtViewer::paintGL()
   Handle(OpenGl_FrameBuffer) aDefaultFbo = aGlCtx->DefaultFrameBuffer();
   if (aDefaultFbo.IsNull())
   {
-    aDefaultFbo = new OpenGl_FrameBuffer();
+    aDefaultFbo = new OcctQtFrameBuffer();
     aGlCtx->SetDefaultFrameBuffer (aDefaultFbo);
   }
   if (!aDefaultFbo->InitWrapper (aGlCtx))
