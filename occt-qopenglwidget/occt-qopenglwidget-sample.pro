@@ -1,5 +1,6 @@
 TEMPLATE = app
 QT += widgets
+greaterThan(QT_MAJOR_VERSION, 5) { QT += openglwidgets }
 CONFIG += console
 
 # source code of the sample

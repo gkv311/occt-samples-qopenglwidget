@@ -490,9 +490,13 @@ void OcctQtViewer::mouseMoveEvent (QMouseEvent* theEvent)
 void OcctQtViewer::wheelEvent (QWheelEvent* theEvent)
 {
   QOpenGLWidget::wheelEvent (theEvent);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+  const Graphic3d_Vec2i aPos (Graphic3d_Vec2d (theEvent->position().x(), theEvent->position().y()));
+#else
   const Graphic3d_Vec2i aPos (theEvent->pos().x(), theEvent->pos().y());
+#endif
   if (!myView.IsNull()
-    && UpdateZoom (Aspect_ScrollDelta (aPos, theEvent->delta() / 8)))
+    && UpdateZoom (Aspect_ScrollDelta (aPos, double(theEvent->angleDelta().y()) / 8.0)))
   {
     updateView();
   }

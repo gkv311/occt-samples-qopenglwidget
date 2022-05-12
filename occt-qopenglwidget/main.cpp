@@ -23,7 +23,6 @@
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QSurfaceFormat>
 
 #include <QAction>
