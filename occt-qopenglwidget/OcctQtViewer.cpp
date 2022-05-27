@@ -251,7 +251,9 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
   // note - window will be created later within initializeGL() callback!
   myView = myViewer->CreateView();
   myView->SetImmediateUpdate (false);
+#ifndef __APPLE__
   myView->ChangeRenderingParams().NbMsaaSamples = 4; // warning - affects performance
+#endif
   myView->ChangeRenderingParams().ToShowStats = true;
   myView->ChangeRenderingParams().CollectedStats = (Graphic3d_RenderingParams::PerfCounters )
     (Graphic3d_RenderingParams::PerfCounters_FrameRate
@@ -321,7 +323,7 @@ OcctQtViewer::~OcctQtViewer()
 // Function : dumpGlInfo
 // Purpose  :
 // ================================================================
-void OcctQtViewer::dumpGlInfo (bool theIsBasic)
+void OcctQtViewer::dumpGlInfo (bool theIsBasic, bool theToPrint)
 {
   TColStd_IndexedDataMapOfStringString aGlCapsDict;
   myView->DiagnosticInformation (aGlCapsDict, theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
@@ -338,7 +340,10 @@ void OcctQtViewer::dumpGlInfo (bool theIsBasic)
     }
   }
 
-  Message::SendInfo (anInfo);
+  if (theToPrint)
+  {
+    Message::SendInfo (anInfo);
+  }
   myGlInfo = QString::fromUtf8 (anInfo.ToCString());
 }
 
@@ -365,11 +370,12 @@ void OcctQtViewer::initializeGL()
   {
     aWindow->SetSize (aViewSize.x(), aViewSize.y());
     myView->SetWindow (aWindow, aGlCtx->RenderingContext());
-    dumpGlInfo (true);
+    dumpGlInfo (true, true);
   }
   else
   {
     aWindow = new Aspect_NeutralWindow();
+    aWindow->SetVirtual (true);
 
     Aspect_Drawable aNativeWin = (Aspect_Drawable )winId();
   #ifdef _WIN32
@@ -381,7 +387,7 @@ void OcctQtViewer::initializeGL()
     aWindow->SetNativeHandle (aNativeWin);
     aWindow->SetSize (aViewSize.x(), aViewSize.y());
     myView->SetWindow (aWindow, aGlCtx->RenderingContext());
-    dumpGlInfo (true);
+    dumpGlInfo (true, true);
 
     myContext->Display (myViewCube, 0, 0, false);
   }
@@ -551,6 +557,7 @@ void OcctQtViewer::paintGL()
     aWindow->SetSize (aViewSizeNew.x(), aViewSizeNew.y());
     myView->MustBeResized();
     myView->Invalidate();
+    dumpGlInfo (true, false);
   }
 
   // flush pending input events and redraw the viewer

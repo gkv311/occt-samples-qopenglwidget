@@ -80,7 +80,7 @@ protected: // user input events
 private:
 
   //! Dump OpenGL info.
-  void dumpGlInfo (bool theIsBasic);
+  void dumpGlInfo (bool theIsBasic, bool theToPrint);
 
   //! Request widget paintGL() event.
   void updateView();
