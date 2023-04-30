@@ -62,6 +62,13 @@ public:
   //! Default widget size.
   virtual QSize sizeHint()        const override { return QSize(720, 480); }
 
+public:
+
+  //! Handle subview focus change.
+  virtual void OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
+                                const Handle(V3d_View)&,
+                                const Handle(V3d_View)& theNewView) override;
+
 protected: // OpenGL events
 
   virtual void initializeGL() override;
@@ -94,6 +101,8 @@ private:
   Handle(V3d_View)               myView;
   Handle(AIS_InteractiveContext) myContext;
   Handle(AIS_ViewCube)           myViewCube;
+
+  Handle(V3d_View)               myFocusView;
 
   QString myGlInfo;
   bool myIsCoreProfile;

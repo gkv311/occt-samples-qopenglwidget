@@ -4,9 +4,11 @@ greaterThan(QT_MAJOR_VERSION, 5) { QT += openglwidgets }
 CONFIG += console
 
 # source code of the sample
-HEADERS = OcctQtViewer.h
+HEADERS = OcctQtViewer.h \
+          OcctGlTools.h
 SOURCES = main.cpp \
-          OcctQtViewer.cpp
+          OcctQtViewer.cpp \
+          OcctGlTools.cpp
 OTHER_FILES = LICENSE.md\
               ReadMe.md \
               custom.pri.template

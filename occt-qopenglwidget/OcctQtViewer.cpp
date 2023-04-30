@@ -26,6 +26,8 @@
 
 #include "OcctQtViewer.h"
 
+#include "OcctGlTools.h"
+
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
 #include <QMessageBox>
@@ -271,6 +273,7 @@ OcctQtViewer::OcctQtViewer (QWidget* theParent)
   aGlFormat.setDepthBufferSize   (24);
   aGlFormat.setStencilBufferSize (8);
   //aGlFormat.setOption (QSurfaceFormat::DebugContext, true);
+  aDriver->ChangeOptions().contextDebug = aGlFormat.testOption (QSurfaceFormat::DebugContext);
   //aGlFormat.setOption (QSurfaceFormat::DeprecatedFunctions, true);
   if (myIsCoreProfile)
   {
@@ -501,8 +504,25 @@ void OcctQtViewer::wheelEvent (QWheelEvent* theEvent)
 #else
   const Graphic3d_Vec2i aPos (theEvent->pos().x(), theEvent->pos().y());
 #endif
-  if (!myView.IsNull()
-    && UpdateZoom (Aspect_ScrollDelta (aPos, double(theEvent->angleDelta().y()) / 8.0)))
+  if (myView.IsNull())
+  {
+    return;
+  }
+
+  if (!myView->Subviews().IsEmpty())
+  {
+    Handle(V3d_View) aPickedView = myView->PickSubview (aPos);
+    if (!aPickedView.IsNull()
+      && aPickedView != myFocusView)
+    {
+      // switch input focus to another subview
+      OnSubviewChanged (myContext, myFocusView, aPickedView);
+      updateView();
+      return;
+    }
+  }
+
+  if (UpdateZoom (Aspect_ScrollDelta (aPos, double(theEvent->angleDelta().y()) / 8.0)))
   {
     updateView();
   }
@@ -530,8 +550,10 @@ void OcctQtViewer::paintGL()
   }
 
   // wrap FBO created by QOpenGLWidget
-  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast (myContext->CurrentViewer()->Driver());
-  const Handle(OpenGl_Context)& aGlCtx = aDriver->GetSharedContext();
+  // get context from this (composer) view rather than from arbitrary one
+  //Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast (myContext->CurrentViewer()->Driver());
+  //Handle(OpenGl_Context) aGlCtx = aDriver->GetSharedContext();
+  Handle(OpenGl_Context) aGlCtx = OcctGlTools::GetGlContext (myView);
   Handle(OpenGl_FrameBuffer) aDefaultFbo = aGlCtx->DefaultFrameBuffer();
   if (aDefaultFbo.IsNull())
   {
@@ -558,11 +580,19 @@ void OcctQtViewer::paintGL()
     myView->MustBeResized();
     myView->Invalidate();
     dumpGlInfo (true, false);
+
+    for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
+    {
+      aSubviewIter->MustBeResized();
+      aSubviewIter->Invalidate();
+      aDefaultFbo->SetupViewport(aGlCtx);
+    }
   }
 
   // flush pending input events and redraw the viewer
-  myView->InvalidateImmediate();
-  FlushViewEvents (myContext, myView, true);
+  Handle(V3d_View) aView = !myFocusView.IsNull() ? myFocusView : myView;
+  aView->InvalidateImmediate();
+  FlushViewEvents(myContext, aView, true);
 }
 
 // ================================================================
@@ -578,4 +608,15 @@ void OcctQtViewer::handleViewRedraw (const Handle(AIS_InteractiveContext)& theCt
     // ask more frames for animation
     updateView();
   }
+}
+
+// ================================================================
+// Function : OnSubviewChanged
+// Purpose  :
+// ================================================================
+void OcctQtViewer::OnSubviewChanged (const Handle(AIS_InteractiveContext)&,
+                                     const Handle(V3d_View)&,
+                                     const Handle(V3d_View)& theNewView)
+{
+  myFocusView = theNewView;
 }
