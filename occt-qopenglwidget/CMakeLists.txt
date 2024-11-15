@@ -87,5 +87,20 @@ if (MSVC)
   if(EXISTS "${QT_BINARY_DIR}/../plugins")
     set (QT_PLUGINS_DIR "${QT_BINARY_DIR}/../plugins")
   endif()
-  configure_file("${CMAKE_SOURCE_DIR}/adm/cmake/occt-qopenglwidget-sample.vcxproj.user.in" "${CMAKE_BINARY_DIR}/occt-qopenglwidget-sample.vcxproj.user" @ONLY)
+
+  get_target_property (aTKernelRel "TKernel" IMPORTED_LOCATION_RELEASE)
+  get_target_property (aTKernelDbg "TKernel" IMPORTED_LOCATION_DEBUG)
+  get_filename_component (OpenCASCADE_BINARY_DIR_RELEASE ${aTKernelRel} DIRECTORY)
+  get_filename_component (OpenCASCADE_BINARY_DIR_DEBUG   ${aTKernelDbg} DIRECTORY)
+  if (NOT EXISTS "${OpenCASCADE_BINARY_DIR_DEBUG}" AND EXISTS "${OpenCASCADE_BINARY_DIR_RELEASE}")
+    set (OpenCASCADE_BINARY_DIR_DEBUG "${OpenCASCADE_BINARY_DIR_RELEASE}")
+  elseif (NOT EXISTS "${OpenCASCADE_BINARY_DIR_RELEASE}" AND EXISTS "${OpenCASCADE_BINARY_DIR_DEBUG}")
+    set (OpenCASCADE_BINARY_DIR_RELEASE "${OpenCASCADE_BINARY_DIR_DEBUG}")
+  endif()
+
+  set_target_properties (${PROJECT_NAME} PROPERTIES
+    VS_DEBUGGER_ENVIRONMENT "\
+PATH=%PATH%;$<IF:$<CONFIG:Debug>,${OpenCASCADE_BINARY_DIR_DEBUG},${OpenCASCADE_BINARY_DIR_RELEASE}>;${3RDPARTY_DLL_DIRS};${QT_BINARY_DIR}\n\
+QT_PLUGIN_PATH=${QT_PLUGINS_DIR}"
+  )
 endif()
