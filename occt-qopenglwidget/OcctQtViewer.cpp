@@ -359,6 +359,13 @@ void OcctQtViewer::initializeGL()
   const QRect aRect = rect();
   const Graphic3d_Vec2i aViewSize (aRect.right() - aRect.left(), aRect.bottom() - aRect.top());
 
+  Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+#ifdef _WIN32
+  HDC   aWglDevCtx = wglGetCurrentDC();
+  HWND  aWglWin = WindowFromDC(aWglDevCtx);
+  aNativeWin = (Aspect_Drawable)aWglWin;
+#endif
+
   Handle(OpenGl_Context) aGlCtx = new OpenGl_Context();
   if (!aGlCtx->Init (myIsCoreProfile))
   {
@@ -371,6 +378,7 @@ void OcctQtViewer::initializeGL()
   Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast (myView->Window());
   if (!aWindow.IsNull())
   {
+    aWindow->SetNativeHandle (aNativeWin);
     aWindow->SetSize (aViewSize.x(), aViewSize.y());
     myView->SetWindow (aWindow, aGlCtx->RenderingContext());
     dumpGlInfo (true, true);
@@ -379,14 +387,6 @@ void OcctQtViewer::initializeGL()
   {
     aWindow = new Aspect_NeutralWindow();
     aWindow->SetVirtual (true);
-
-    Aspect_Drawable aNativeWin = (Aspect_Drawable )winId();
-  #ifdef _WIN32
-    //HGLRC aWglCtx    = wglGetCurrentContext();
-    HDC   aWglDevCtx = wglGetCurrentDC();
-    HWND  aWglWin    = WindowFromDC (aWglDevCtx);
-    aNativeWin = (Aspect_Drawable )aWglWin;
-  #endif
     aWindow->SetNativeHandle (aNativeWin);
     aWindow->SetSize (aViewSize.x(), aViewSize.y());
     myView->SetWindow (aWindow, aGlCtx->RenderingContext());
@@ -546,6 +546,20 @@ void OcctQtViewer::paintGL()
 {
   if (myView->Window().IsNull())
   {
+    return;
+  }
+
+  Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+#ifdef _WIN32
+  HDC   aWglDevCtx = wglGetCurrentDC();
+  HWND  aWglWin = WindowFromDC(aWglDevCtx);
+  aNativeWin = (Aspect_Drawable)aWglWin;
+#endif
+  if (myView->Window()->NativeHandle() != aNativeWin)
+  {
+    // workaround window recreation done by Qt on monitor (QScreen) disconnection
+    Message::SendWarning() << "Native window handle has changed by QOpenGLWidget!";
+    initializeGL();
     return;
   }
 
