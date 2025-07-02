@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
 #ifdef _WIN32
+  // should be included before other headers to avoid missing definitions
   #include <windows.h>
 #endif
 #include <OpenGl_Context.hxx>
@@ -46,45 +47,39 @@
 namespace
 {
 //! Map Qt buttons bitmask to virtual keys.
-Aspect_VKeyMouse qtMouseButtons2VKeys(Qt::MouseButtons theButtons)
+static Aspect_VKeyMouse qtMouseButtons2VKeys(Qt::MouseButtons theButtons)
 {
   Aspect_VKeyMouse aButtons = Aspect_VKeyMouse_NONE;
   if ((theButtons & Qt::LeftButton) != 0)
-  {
     aButtons |= Aspect_VKeyMouse_LeftButton;
-  }
+
   if ((theButtons & Qt::MiddleButton) != 0)
-  {
     aButtons |= Aspect_VKeyMouse_MiddleButton;
-  }
+
   if ((theButtons & Qt::RightButton) != 0)
-  {
     aButtons |= Aspect_VKeyMouse_RightButton;
-  }
+
   return aButtons;
 }
 
 //! Map Qt mouse modifiers bitmask to virtual keys.
-Aspect_VKeyFlags qtMouseModifiers2VKeys(Qt::KeyboardModifiers theModifiers)
+static Aspect_VKeyFlags qtMouseModifiers2VKeys(Qt::KeyboardModifiers theModifiers)
 {
   Aspect_VKeyFlags aFlags = Aspect_VKeyFlags_NONE;
   if ((theModifiers & Qt::ShiftModifier) != 0)
-  {
     aFlags |= Aspect_VKeyFlags_SHIFT;
-  }
+
   if ((theModifiers & Qt::ControlModifier) != 0)
-  {
     aFlags |= Aspect_VKeyFlags_CTRL;
-  }
+
   if ((theModifiers & Qt::AltModifier) != 0)
-  {
     aFlags |= Aspect_VKeyFlags_ALT;
-  }
+
   return aFlags;
 }
 
 //! Map Qt key to virtual key.
-Aspect_VKey qtKey2VKey(int theKey)
+static Aspect_VKey qtKey2VKey(int theKey)
 {
   switch (theKey)
   {
@@ -295,8 +290,7 @@ public:
 // Function : OcctQtViewer
 // ================================================================
 OcctQtViewer::OcctQtViewer(QWidget* theParent)
-    : QOpenGLWidget(theParent),
-      myIsCoreProfile(true)
+    : QOpenGLWidget(theParent)
 {
   Handle(Aspect_DisplayConnection) aDisp   = new Aspect_DisplayConnection();
   Handle(OpenGl_GraphicDriver)     aDriver = new OpenGl_GraphicDriver(aDisp, false);
@@ -348,9 +342,8 @@ OcctQtViewer::OcctQtViewer(QWidget* theParent)
   aDriver->ChangeOptions().contextDebug = aGlFormat.testOption(QSurfaceFormat::DebugContext);
   // aGlFormat.setOption (QSurfaceFormat::DeprecatedFunctions, true);
   if (myIsCoreProfile)
-  {
     aGlFormat.setVersion(4, 5);
-  }
+
   aGlFormat.setProfile(myIsCoreProfile ? QSurfaceFormat::CoreProfile : QSurfaceFormat::CompatibilityProfile);
 
   // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
@@ -407,17 +400,15 @@ void OcctQtViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
     if (!aValueIter.Value().IsEmpty())
     {
       if (!anInfo.IsEmpty())
-      {
         anInfo += "\n";
-      }
+
       anInfo += aValueIter.Key() + ": " + aValueIter.Value();
     }
   }
 
   if (theToPrint)
-  {
     Message::SendInfo(anInfo);
-  }
+
   myGlInfo = QString::fromUtf8(anInfo.ToCString());
 }
 
@@ -486,7 +477,10 @@ void OcctQtViewer::closeEvent(QCloseEvent* theEvent)
 // ================================================================
 void OcctQtViewer::keyPressEvent(QKeyEvent* theEvent)
 {
-  Aspect_VKey aKey = qtKey2VKey(theEvent->key());
+  if (myView.IsNull())
+    return;
+
+  const Aspect_VKey aKey = qtKey2VKey(theEvent->key());
   switch (aKey)
   {
     case Aspect_VKey_Escape: {
@@ -508,12 +502,13 @@ void OcctQtViewer::keyPressEvent(QKeyEvent* theEvent)
 void OcctQtViewer::mousePressEvent(QMouseEvent* theEvent)
 {
   QOpenGLWidget::mousePressEvent(theEvent);
+  if (myView.IsNull())
+    return;
+
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyFlags aFlags = qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (!myView.IsNull() && UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
-  {
+  if (UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
     updateView();
-  }
 }
 
 // ================================================================
@@ -522,12 +517,13 @@ void OcctQtViewer::mousePressEvent(QMouseEvent* theEvent)
 void OcctQtViewer::mouseReleaseEvent(QMouseEvent* theEvent)
 {
   QOpenGLWidget::mouseReleaseEvent(theEvent);
+  if (myView.IsNull())
+    return;
+
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyFlags aFlags = qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (!myView.IsNull() && UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
-  {
+  if (UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
     updateView();
-  }
 }
 
 // ================================================================
@@ -536,12 +532,14 @@ void OcctQtViewer::mouseReleaseEvent(QMouseEvent* theEvent)
 void OcctQtViewer::mouseMoveEvent(QMouseEvent* theEvent)
 {
   QOpenGLWidget::mouseMoveEvent(theEvent);
+  if (myView.IsNull())
+    return;
+
   const Graphic3d_Vec2i aNewPos(theEvent->pos().x(), theEvent->pos().y());
-  if (!myView.IsNull()
-      && UpdateMousePosition(aNewPos,
-                             qtMouseButtons2VKeys(theEvent->buttons()),
-                             qtMouseModifiers2VKeys(theEvent->modifiers()),
-                             false))
+  if (UpdateMousePosition(aNewPos,
+                          qtMouseButtons2VKeys(theEvent->buttons()),
+                          qtMouseModifiers2VKeys(theEvent->modifiers()),
+                          false))
   {
     updateView();
   }
@@ -553,16 +551,14 @@ void OcctQtViewer::mouseMoveEvent(QMouseEvent* theEvent)
 void OcctQtViewer::wheelEvent(QWheelEvent* theEvent)
 {
   QOpenGLWidget::wheelEvent(theEvent);
+  if (myView.IsNull())
+    return;
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
   const Graphic3d_Vec2i aPos(Graphic3d_Vec2d(theEvent->position().x(), theEvent->position().y()));
 #else
   const Graphic3d_Vec2i aPos(theEvent->pos().x(), theEvent->pos().y());
 #endif
-  if (myView.IsNull())
-  {
-    return;
-  }
-
   if (!myView->Subviews().IsEmpty())
   {
     Handle(V3d_View) aPickedView = myView->PickSubview(aPos);
@@ -576,9 +572,7 @@ void OcctQtViewer::wheelEvent(QWheelEvent* theEvent)
   }
 
   if (UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
-  {
     updateView();
-  }
 }
 
 // =======================================================================
@@ -595,10 +589,8 @@ void OcctQtViewer::updateView()
 // ================================================================
 void OcctQtViewer::paintGL()
 {
-  if (myView->Window().IsNull())
-  {
+  if (myView.IsNull() || myView->Window().IsNull())
     return;
-  }
 
   Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
 #ifdef _WIN32
@@ -670,10 +662,7 @@ void OcctQtViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx
 {
   AIS_ViewController::handleViewRedraw(theCtx, theView);
   if (myToAskNextFrame)
-  {
-    // ask more frames for animation
-    updateView();
-  }
+    updateView(); // ask more frames for animation
 }
 
 // ================================================================

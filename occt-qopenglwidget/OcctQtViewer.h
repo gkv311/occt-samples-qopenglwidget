@@ -32,7 +32,11 @@
 
 class AIS_ViewCube;
 
-//! OCCT 3D View.
+//! OpenGL Qt widget holding OCCT 3D View.
+//!
+//! Inheritance from AIS_ViewController is used to translate
+//! user input events (mouse, keyboard, window resize, etc.)
+//! to 3D Viewer (panning, rotation, zooming, etc.).
 class OcctQtViewer : public QOpenGLWidget, public AIS_ViewController
 {
   Q_OBJECT
@@ -99,7 +103,7 @@ private:
   Handle(V3d_View) myFocusView;
 
   QString myGlInfo;
-  bool    myIsCoreProfile;
+  bool    myIsCoreProfile = true;
 };
 
 #endif // _OcctQtViewer_HeaderFile
