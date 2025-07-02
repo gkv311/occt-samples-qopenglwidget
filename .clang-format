@@ -1,0 +1,36 @@
+# clang-format configuration file trying to apply OCCT coding style
+BasedOnStyle: Microsoft
+#
+# Style options
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+ColumnLimit: 120
+ContinuationIndentWidth: 2
+#ConstructorInitializerIndentWidth: 0
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+IndentWidth: 2
+IndentWrappedFunctionNames: true
+PackConstructorInitializers: Never
+PointerAlignment: Left
+ReferenceAlignment: Left
+SeparateDefinitionBlocks: Always
+SortIncludes: false
+UseTab: Never
+#
+# OCCT specific settings
+StatementMacros:
+  - Standard_FALLTHROUGH
+  - Standard_DEPRECATED
+TypenameMacros:
+  - Handle

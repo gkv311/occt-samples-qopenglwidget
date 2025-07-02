@@ -12,7 +12,7 @@ class OcctGlTools
 {
 public:
   //! Return GL context.
-  static Handle(OpenGl_Context) GetGlContext (const Handle(V3d_View)& theView);
+  static Handle(OpenGl_Context) GetGlContext(const Handle(V3d_View)& theView);
 };
 
 #endif // _OcctGlTools_HeaderFile
