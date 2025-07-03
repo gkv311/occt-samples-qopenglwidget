@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Kirill Gavrilov
 
-#include "OcctQOpenGLWidgetViewer.h"
+#include "OcctQWidgetViewer.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
@@ -21,14 +21,14 @@
 //! Main application window.
 class MyMainWindow : public QMainWindow
 {
-  OcctQOpenGLWidgetViewer* myViewer = nullptr;
+  OcctQWidgetViewer* myViewer = nullptr;
 
 public:
   //! Window constructor.
   MyMainWindow()
   {
     // 3D Viewer widget as a central widget
-    myViewer = new OcctQOpenGLWidgetViewer();
+    myViewer = new OcctQWidgetViewer();
     setCentralWidget(myViewer);
 
     // menu bar
@@ -80,9 +80,10 @@ private:
     {
       // slider changing viewer background color
 
-      // the widgets on top of OCCT 3D Viewer (implemented as QOpenGLWidget) might have transparent background
+      // make sure widget on top of OCCT 3D Viewer (implemented as QWidget and not QOpenGLWidget)
+      // is filled with color - semitransparent widgets will have artifacts
       QWidget* aSliderBox = new QWidget();
-      aSliderBox->setStyleSheet("QWidget { background-color: rgba(0, 0, 0, 0); }");
+      aSliderBox->setStyleSheet("QWidget { background-color: black; }");
 
       QHBoxLayout* aSliderLayout = new QHBoxLayout(aSliderBox);
       {
@@ -116,6 +117,7 @@ private:
           myViewer->update();
         });
       }
+
       aLayout->addWidget(aSliderBox);
     }
   }
@@ -163,7 +165,7 @@ int main(int theNbArgs, char** theArgVec)
 {
   QApplication aQApp(theNbArgs, theArgVec);
 
-  QCoreApplication::setApplicationName("OCCT Qt/QOpenGLWidget Viewer sample");
+  QCoreApplication::setApplicationName("OCCT Qt/QWidget Viewer sample");
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
 

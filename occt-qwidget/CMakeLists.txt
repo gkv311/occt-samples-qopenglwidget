@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.2)
 
-project (occt-qopenglwidget-sample)
+project (occt-qwidget-sample)
 
 set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../adm/cmake" ${CMAKE_MODULE_PATH})
 set (APP_VERSION_MAJOR 1)
@@ -71,11 +71,9 @@ set (OpenCASCADE_LIBS TKRWMesh TKBinXCAF TKBin TKBinL TKOpenGl TKXCAF TKVCAF TKC
 # main project target
 add_executable (${PROJECT_NAME}
   main.cpp
-  OcctQOpenGLWidgetViewer.h
-  OcctQOpenGLWidgetViewer.cpp
-  OcctGlTools.h
-  OcctGlTools.cpp
   OcctQtTools.h
+  OcctQWidgetViewer.h
+  OcctQWidgetViewer.cpp
 )
 target_link_libraries (${PROJECT_NAME} PRIVATE Qt5::Widgets ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
 

@@ -1,26 +1,7 @@
-// Copyright (c) 2021 OPEN CASCADE SAS
-//
-// This file is part of the examples of the Open CASCADE Technology software library.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
+// Copyright (c) 2023 Kirill Gavrilov
 
-#ifndef _OcctQtViewer_HeaderFile
-#define _OcctQtViewer_HeaderFile
+#ifndef _OcctQOpenGLWidgetViewer_HeaderFile
+#define _OcctQOpenGLWidgetViewer_HeaderFile
 
 #include <Standard_WarningsDisable.hxx>
 #include <QOpenGLWidget>
@@ -34,18 +15,21 @@ class AIS_ViewCube;
 
 //! OpenGL Qt widget holding OCCT 3D View.
 //!
+//! OCCT 3D Viewer will reuse OpenGL context created by QOpenGLWidget;
+//! widgets on top will be blended by Qt naturally.
+//!
 //! Inheritance from AIS_ViewController is used to translate
 //! user input events (mouse, keyboard, window resize, etc.)
 //! to 3D Viewer (panning, rotation, zooming, etc.).
-class OcctQtViewer : public QOpenGLWidget, public AIS_ViewController
+class OcctQOpenGLWidgetViewer : public QOpenGLWidget, public AIS_ViewController
 {
   Q_OBJECT
 public:
   //! Main constructor.
-  OcctQtViewer(QWidget* theParent = nullptr);
+  OcctQOpenGLWidgetViewer(QWidget* theParent = nullptr);
 
   //! Destructor.
-  virtual ~OcctQtViewer();
+  virtual ~OcctQOpenGLWidgetViewer();
 
   //! Return Viewer.
   const Handle(V3d_Viewer)& Viewer() const { return myViewer; }
@@ -59,7 +43,7 @@ public:
   //! Return OpenGL info.
   const QString& getGlInfo() const { return myGlInfo; }
 
-  //! Minial widget size.
+  //! Minimal widget size.
   virtual QSize minimumSizeHint() const override { return QSize(200, 200); }
 
   //! Default widget size.
@@ -106,4 +90,4 @@ private:
   bool    myIsCoreProfile = true;
 };
 
-#endif // _OcctQtViewer_HeaderFile
+#endif // _OcctQOpenGLWidgetViewer_HeaderFile
