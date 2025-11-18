@@ -1,4 +1,4 @@
-name: Build (Linux/GCC)
+name: Build (Linux/GCC/Qt5)
 on:
   push:
     branches: [ master ]
@@ -29,7 +29,7 @@ jobs:
     - name: Configure project
       run: |
         mkdir "build"
-        cmake -G Ninja -S . -B "./build"
+        cmake -G Ninja -S . -B "./build" -D QT_VERSION=Qt5
     - name: Build project
       run: |
         cmake --build "./build" --config Release

@@ -47,13 +47,21 @@ endif()
 # Find OpenGL
 find_package (OpenGL REQUIRED)
 
-# Find Qt5
+# Find Qt
+set (QT_VERSION "Qt5" CACHE STRING "Qt major version to use")
+set_property (CACHE QT_VERSION PROPERTY STRINGS Qt5 Qt6)
 set (CMAKE_AUTOUIC ON)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 set_property (GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP "Generated Files/Moc")
 set_property (GLOBAL PROPERTY AUTORCC_SOURCE_GROUP "Generated Files/Resources")
-find_package (Qt5 COMPONENTS Widgets REQUIRED)
+if ("${QT_VERSION}" STREQUAL "Qt6")
+  set (QT_COMPONENT_OPENGLWIDGETS "OpenGLWidgets")
+else()
+  set (QT_COMPONENT_OPENGLWIDGETS "Widgets")
+endif()
+find_package (${QT_VERSION} COMPONENTS ${QT_COMPONENT_OPENGLWIDGETS} REQUIRED)
+message (STATUS "Using ${QT_VERSION} from \"${${QT_VERSION}_DIR}\"")
 
 # Find Open CASCADE Technology
 find_package (OpenCASCADE REQUIRED)
@@ -77,12 +85,12 @@ add_executable (${PROJECT_NAME}
   OcctGlTools.cpp
   OcctQtTools.h
 )
-target_link_libraries (${PROJECT_NAME} PRIVATE Qt5::Widgets ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
+target_link_libraries (${PROJECT_NAME} PRIVATE ${QT_VERSION}::${QT_COMPONENT_OPENGLWIDGETS} ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
 
 # auxiliary development environment
 if (MSVC)
   set (X_COMPILER_BITNESS x64)
-  get_target_property (QtCore_location Qt5::Core LOCATION)
+  get_target_property (QtCore_location ${QT_VERSION}::Core LOCATION)
   get_filename_component (QT_BINARY_DIR ${QtCore_location} DIRECTORY)
   set (QT_PLUGINS_DIR)
   if (EXISTS "${QT_BINARY_DIR}/../plugins")
