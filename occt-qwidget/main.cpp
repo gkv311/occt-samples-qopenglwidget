@@ -44,12 +44,14 @@ private:
   {
     QMenuBar* aMenuBar    = new QMenuBar();
     QMenu*    aMenuWindow = aMenuBar->addMenu("&File");
+#if (OCC_VERSION_HEX >= 0x070700)
     {
       QAction* anActionSplit = new QAction(aMenuWindow);
       anActionSplit->setText("Split Views");
       aMenuWindow->addAction(anActionSplit);
       connect(anActionSplit, &QAction::triggered, [this]() { splitSubviews(); });
     }
+#endif
     {
       QAction* anActionQuit = new QAction(aMenuWindow);
       anActionQuit->setText("Quit");
@@ -105,12 +107,13 @@ private:
         connect(aSlider, &QSlider::valueChanged, [this](int theValue) {
           const float          aVal = theValue / 255.0f;
           const Quantity_Color aColor(aVal, aVal, aVal, Quantity_TOC_sRGB);
-
+#if (OCC_VERSION_HEX >= 0x070700)
           for (const Handle(V3d_View)& aSubviewIter : myViewer->View()->Subviews())
           {
             aSubviewIter->SetBgGradientColors(aColor, Quantity_NOC_BLACK, Aspect_GradientFillMethod_Elliptical);
             aSubviewIter->Invalidate();
           }
+#endif
           // myViewer->View()->SetBackgroundColor(aColor);
           myViewer->View()->SetBgGradientColors(aColor, Quantity_NOC_BLACK, Aspect_GradientFillMethod_Elliptical);
           myViewer->View()->Invalidate();
@@ -122,6 +125,7 @@ private:
     }
   }
 
+#if (OCC_VERSION_HEX >= 0x070700)
   //! Advanced method splitting 3D Viewer into sub-views.
   void splitSubviews()
   {
@@ -159,6 +163,7 @@ private:
     myViewer->View()->Invalidate();
     myViewer->update();
   }
+#endif
 };
 
 int main(int theNbArgs, char** theArgVec)

@@ -10,6 +10,7 @@
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_ViewController.hxx>
 #include <V3d_View.hxx>
+#include <Standard_Version.hxx>
 
 class AIS_ViewCube;
 
@@ -50,11 +51,12 @@ public:
   virtual QSize sizeHint() const override { return QSize(720, 480); }
 
 public:
+#if (OCC_VERSION_HEX >= 0x070700)
   //! Handle subview focus change.
   virtual void OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
                                 const Handle(V3d_View)&,
                                 const Handle(V3d_View)& theNewView) override;
-
+#endif
 protected: // OpenGL events
   virtual void initializeGL() override;
   virtual void paintGL() override;

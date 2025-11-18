@@ -245,6 +245,8 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
 #else
   const Graphic3d_Vec2i aPos(theEvent->pos().x(), theEvent->pos().y());
 #endif
+
+#if (OCC_VERSION_HEX >= 0x070700)
   if (!myView->Subviews().IsEmpty())
   {
     Handle(V3d_View) aPickedView = myView->PickSubview(aPos);
@@ -256,6 +258,7 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
       return;
     }
   }
+#endif
 
   if (UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
     updateView();
@@ -300,11 +303,13 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* theEvent)
     myView->Invalidate();
     dumpGlInfo(true, false);
 
+#if (OCC_VERSION_HEX >= 0x070700)
     for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
     {
       aSubviewIter->MustBeResized();
       aSubviewIter->Invalidate();
     }
+#endif
   }
 
   // flush pending input events and redraw the viewer
@@ -332,6 +337,7 @@ void OcctQWidgetViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& t
     updateView(); // ask more frames for animation
 }
 
+#if (OCC_VERSION_HEX >= 0x070700)
 // ================================================================
 // Function : OnSubviewChanged
 // ================================================================
@@ -341,3 +347,4 @@ void OcctQWidgetViewer::OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
 {
   myFocusView = theNewView;
 }
+#endif
