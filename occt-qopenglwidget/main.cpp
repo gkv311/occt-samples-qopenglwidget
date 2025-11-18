@@ -16,6 +16,7 @@
 #include <QSlider>
 #include <Standard_WarningsRestore.hxx>
 
+#include <OSD_Environment.hxx>
 #include <Standard_Version.hxx>
 
 //! Main application window.
@@ -166,6 +167,23 @@ private:
 
 int main(int theNbArgs, char** theArgVec)
 {
+#if defined(_WIN32)
+  //
+#elif defined(__APPLE__)
+  //
+#else
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  // Qt6 tries to use Wayland platform by default, which is incompatible with OCCT depending on Xlib;
+  // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platfom xcb' argument).
+  OSD_Environment aQpaPlat("QT_QPA_PLATFORM");
+  if (aQpaPlat.Value().IsEmpty())
+  {
+    aQpaPlat.SetValue("xcb");
+    aQpaPlat.Build();
+  }
+#endif
+#endif
+
   QApplication aQApp(theNbArgs, theArgVec);
 
   QCoreApplication::setApplicationName("OCCT Qt/QOpenGLWidget Viewer sample");
