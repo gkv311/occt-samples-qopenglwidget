@@ -1,0 +1,35 @@
+name: Build (Linux/GCC)
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  Ubuntu:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Clone Tree
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          g++ cmake ninja-build \
+          libocct-draw-dev libocct-visualization-dev libocct-ocaf-dev libocct-modeling-data-dev \
+          libocct-modeling-algorithms-dev libocct-foundation-dev libocct-data-exchange-dev \
+          libgl-dev libegl-dev \
+          tcllib tklib tcl-dev tk-dev \
+          libtbb-dev \
+          qtbase5-dev qtdeclarative5-dev qml-module-qtquick-controls2 qml-module-qtquick-templates2 \
+          xvfb
+    - name: Configure project
+      run: |
+        mkdir "build"
+        cmake -G Ninja -S . -B "./build"
+    - name: Build project
+      run: |
+        cmake --build "./build" --config Release
