@@ -276,7 +276,7 @@ void OcctQWidgetViewer::updateView()
 // ================================================================
 // Function : paintEvent
 // ================================================================
-void OcctQWidgetViewer::paintEvent(QPaintEvent* theEvent)
+void OcctQWidgetViewer::paintEvent(QPaintEvent* )
 {
   if (myView.IsNull() || myView->Window().IsNull())
     return;
@@ -321,7 +321,7 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* theEvent)
 // ================================================================
 // Function : resizeEvent
 // ================================================================
-void OcctQWidgetViewer::resizeEvent(QResizeEvent* theEvent)
+void OcctQWidgetViewer::resizeEvent(QResizeEvent* )
 {
   if (!myView.IsNull())
     myView->MustBeResized();
