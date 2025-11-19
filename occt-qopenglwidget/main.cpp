@@ -172,7 +172,6 @@ int main(int theNbArgs, char** theArgVec)
 #elif defined(__APPLE__)
   //
 #else
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   // Qt6 tries to use Wayland platform by default, which is incompatible with OCCT depending on Xlib;
   // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platfom xcb' argument).
   OSD_Environment aQpaPlat("QT_QPA_PLATFORM");
@@ -181,7 +180,6 @@ int main(int theNbArgs, char** theArgVec)
     aQpaPlat.SetValue("xcb");
     aQpaPlat.Build();
   }
-#endif
 #endif
 
   QApplication aQApp(theNbArgs, theArgVec);
