@@ -61,7 +61,8 @@ OcctQWidgetViewer::OcctQWidgetViewer(QWidget* theParent)
   // Qt widget setup
   setAttribute(Qt::WA_PaintOnScreen);
   setAttribute(Qt::WA_NoSystemBackground);
-  setAttribute(Qt::WA_NativeWindow);   // request native window for this widget to create OpenGL context
+  setAttribute(Qt::WA_NativeWindow);      // request native window for this widget to create OpenGL context
+  setAttribute(Qt::WA_AcceptTouchEvents); // necessary to recieve QTouchEvent events
   setMouseTracking(true);
   setBackgroundRole(QPalette::NoRole); // or NoBackground
   setFocusPolicy(Qt::StrongFocus);     // set focus policy to threat QContextMenuEvent from keyboard
@@ -151,6 +152,53 @@ void OcctQWidgetViewer::initializeGL()
 }
 
 // ================================================================
+// Function : event
+// ================================================================
+bool OcctQWidgetViewer::event(QEvent* theEvent)
+{
+  if (myView.IsNull())
+    return QWidget::event(theEvent);
+
+  const bool isTouch = theEvent->type() == QEvent::TouchBegin
+                    || theEvent->type() == QEvent::TouchUpdate
+                    || theEvent->type() == QEvent::TouchEnd;
+  if (!isTouch)
+    return QWidget::event(theEvent);
+
+  bool hasUpdates = false;
+  const QTouchEvent* aQTouchEvent = static_cast<QTouchEvent*>(theEvent);
+  for (const QTouchEvent::TouchPoint& aQTouch : aQTouchEvent->touchPoints())
+  {
+    const Standard_Size   aTouchId = aQTouch.id();
+    const Graphic3d_Vec2d aNewPos2d(aQTouch.pos().x(), aQTouch.pos().y());
+    const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
+    if (aQTouch.state() == Qt::TouchPointPressed
+     && aNewPos2i.minComp() >= 0)
+    {
+      hasUpdates = true;
+      AddTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == Qt::TouchPointMoved
+          && TouchPoints().Contains(aTouchId))
+    {
+      hasUpdates = true;
+      UpdateTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == Qt::TouchPointReleased
+          && RemoveTouchPoint(aTouchId))
+    {
+      hasUpdates = true;
+    }
+  }
+
+  myHasTouchInput = true;
+  if (hasUpdates)
+    updateView();
+
+  return true;
+}
+
+// ================================================================
 // Function : closeEvent
 // ================================================================
 void OcctQWidgetViewer::closeEvent(QCloseEvent* theEvent)
@@ -191,6 +239,9 @@ void OcctQWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
   if (myView.IsNull())
     return;
 
+  if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
+    return; // skip mouse events emulated by system from screen touches
+
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
   if (UpdateMouseButtons(aPnt, OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
@@ -220,6 +271,9 @@ void OcctQWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
   QWidget::mouseMoveEvent(theEvent);
   if (myView.IsNull())
     return;
+
+  if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
+    return; // skip mouse events emulated by system from screen touches
 
   const Graphic3d_Vec2i aNewPos(theEvent->pos().x(), theEvent->pos().y());
   if (UpdateMousePosition(aNewPos,

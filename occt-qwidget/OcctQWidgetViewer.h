@@ -71,6 +71,7 @@ protected: // drawing events
   virtual QPaintEngine* paintEngine() const override { return nullptr; }
 
 protected: // user input events
+  virtual bool event(QEvent* theEvent) override;
   virtual void closeEvent(QCloseEvent* theEvent) override;
   virtual void keyPressEvent(QKeyEvent* theEvent) override;
   virtual void mousePressEvent(QMouseEvent* theEvent) override;
@@ -98,6 +99,7 @@ private:
 
   QString myGlInfo;
   bool    myIsCoreProfile = true;
+  bool    myHasTouchInput = false;
 };
 
 #endif // _OcctQWidgetViewer_HeaderFile

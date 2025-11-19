@@ -63,6 +63,7 @@ protected: // OpenGL events
   // virtual void resizeGL(int , int ) override;
 
 protected: // user input events
+  virtual bool event(QEvent* theEvent) override;
   virtual void closeEvent(QCloseEvent* theEvent) override;
   virtual void keyPressEvent(QKeyEvent* theEvent) override;
   virtual void mousePressEvent(QMouseEvent* theEvent) override;
@@ -90,6 +91,7 @@ private:
 
   QString myGlInfo;
   bool    myIsCoreProfile = true;
+  bool    myHasTouchInput = false;
 };
 
 #endif // _OcctQOpenGLWidgetViewer_HeaderFile
