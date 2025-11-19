@@ -25,7 +25,7 @@ jobs:
           tcllib tklib tcl-dev tk-dev \
           libtbb-dev \
           qt6-base-dev qt6-declarative-dev qml6-module-qtquick-controls qml6-module-qtquick-templates \
-          xvfb
+          xvfb scrot
     - name: Configure project
       run: |
         mkdir "build"
@@ -33,3 +33,12 @@ jobs:
     - name: Build project
       run: |
         cmake --build "./build" --config Release
+    - name: Run tests
+      run: |
+        xvfb-run --server-args="-screen 0 800x600x24" ./.github/workflows/screenshot.sh ./build/occt-qwidget/occt-qwidget-sample             ./build/occt-qwidget.png       5
+        xvfb-run --server-args="-screen 0 800x600x24" ./.github/workflows/screenshot.sh ./build/occt-qopenglwidget/occt-qopenglwidget-sample ./build/occt-qopenglwidget.png 5
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: occt-qwidget
+        path: ./build/*.png
