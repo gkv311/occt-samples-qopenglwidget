@@ -176,16 +176,16 @@ bool OcctQWidgetViewer::event(QEvent* theEvent)
      && aNewPos2i.minComp() >= 0)
     {
       hasUpdates = true;
-      AddTouchPoint(aTouchId, aNewPos2d);
+      AIS_ViewController::AddTouchPoint(aTouchId, aNewPos2d);
     }
     else if (aQTouch.state() == Qt::TouchPointMoved
-          && TouchPoints().Contains(aTouchId))
+          && AIS_ViewController::TouchPoints().Contains(aTouchId))
     {
       hasUpdates = true;
-      UpdateTouchPoint(aTouchId, aNewPos2d);
+      AIS_ViewController::UpdateTouchPoint(aTouchId, aNewPos2d);
     }
     else if (aQTouch.state() == Qt::TouchPointReleased
-          && RemoveTouchPoint(aTouchId))
+          && AIS_ViewController::RemoveTouchPoint(aTouchId))
     {
       hasUpdates = true;
     }
@@ -217,11 +217,13 @@ void OcctQWidgetViewer::keyPressEvent(QKeyEvent* theEvent)
   const Aspect_VKey aKey = OcctQtTools::qtKey2VKey(theEvent->key());
   switch (aKey)
   {
-    case Aspect_VKey_Escape: {
+    case Aspect_VKey_Escape:
+    {
       QApplication::exit();
       return;
     }
-    case Aspect_VKey_F: {
+    case Aspect_VKey_F:
+    {
       myView->FitAll(0.01, false);
       update();
       return;
@@ -243,8 +245,9 @@ void OcctQWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (UpdateMouseButtons(aPnt, OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
     updateView();
 }
 
@@ -258,8 +261,9 @@ void OcctQWidgetViewer::mouseReleaseEvent(QMouseEvent* theEvent)
     return;
 
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (UpdateMouseButtons(aPnt, OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons()), aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
     updateView();
 }
 
@@ -275,14 +279,11 @@ void OcctQWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
   if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
     return; // skip mouse events emulated by system from screen touches
 
-  const Graphic3d_Vec2i aNewPos(theEvent->pos().x(), theEvent->pos().y());
-  if (UpdateMousePosition(aNewPos,
-                          OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons()),
-                          OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers()),
-                          false))
-  {
+  const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
+  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
+  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
+  if (AIS_ViewController::UpdateMousePosition(aNewPos, aButtons, aFlags, false))
     updateView();
-  }
 }
 
 // ==============================================================================
@@ -314,7 +315,7 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
   }
 #endif
 
-  if (UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
+  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
     updateView();
 }
 
@@ -323,7 +324,7 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
 // =======================================================================
 void OcctQWidgetViewer::updateView()
 {
-  update();
+  QWidget::update();
   // if (window() != NULL) { window()->update(); }
 }
 
@@ -369,7 +370,7 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* )
   // flush pending input events and redraw the viewer
   Handle(V3d_View) aView = !myFocusView.IsNull() ? myFocusView : myView;
   aView->InvalidateImmediate();
-  FlushViewEvents(myContext, aView, true);
+  AIS_ViewController::FlushViewEvents(myContext, aView, true);
 }
 
 // ================================================================
