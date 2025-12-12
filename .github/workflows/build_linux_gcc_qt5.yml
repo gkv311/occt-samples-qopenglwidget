@@ -24,7 +24,8 @@ jobs:
           libgl-dev libegl-dev \
           tcllib tklib tcl-dev tk-dev \
           libtbb-dev \
-          qtbase5-dev qtdeclarative5-dev qml-module-qtquick-controls2 qml-module-qtquick-templates2 \
+          qtbase5-dev qtdeclarative5-dev qtquickcontrols2-5-dev \
+          qml-module-qtquick-controls2 qml-module-qtquick-templates2 \
           xvfb scrot
     - name: Configure project
       run: |

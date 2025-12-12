@@ -38,3 +38,15 @@ Unlike `QWidget` sample, the widgets on top of `QOpenGLWidget` holding 3D Viewer
 as Qt will be able to blend widgets together on its own.
 
 ![sample screenshot](/images/occt-qopenglwidget-sample-x11.png)
+
+## OCCT QtQuick/QML sample
+
+Project within `occt-qtquick` subfolder shows initialization of OCCT 3D viewer
+from OpenGL context created by `QQuickFramebufferObject` within Qt5 QtQuick/QML application.
+
+The approach with `QQuickFramebufferObject` requires careful gluing layer for Qt and OCCT 3D Viewer to share common OpenGL context.
+
+`QtQuick` by default will attempt offloading rendering into a separate working thread (`QSGRenderThread`) on some systems,
+which requires addition of multithreading synchronization mechanism when dealing with OCCT 3D Viewer from GUI thread.
+Uncomment lines setting `QSG_RENDER_LOOP` environment variable,
+if these complexities are undesired to ask Qt managing rendering from GUI thread.

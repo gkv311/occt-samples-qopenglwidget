@@ -5,3 +5,4 @@ project (occt-qt)
 
 add_subdirectory (occt-qwidget)
 add_subdirectory (occt-qopenglwidget)
+add_subdirectory (occt-qtquick)
