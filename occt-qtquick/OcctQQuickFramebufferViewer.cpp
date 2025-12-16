@@ -25,40 +25,6 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <Message.hxx>
 #include <OpenGl_GraphicDriver.hxx>
-#include <OpenGl_FrameBuffer.hxx>
-
-//! OpenGL FBO subclass for wrapping FBO created by Qt using GL_RGBA8
-//! texture format instead of GL_SRGB8_ALPHA8.
-//! This FBO is set to OpenGl_Context::SetDefaultFrameBuffer() as a final target.
-//! Subclass calls OpenGl_Context::SetFrameBufferSRGB() with sRGB=false flag,
-//! which asks OCCT to disable GL_FRAMEBUFFER_SRGB and apply sRGB gamma correction manually.
-class OcctQtFrameBuffer : public OpenGl_FrameBuffer
-{
-  DEFINE_STANDARD_RTTI_INLINE(OcctQtFrameBuffer, OpenGl_FrameBuffer)
-public:
-  //! Empty constructor.
-  OcctQtFrameBuffer() {}
-
-  //! Make this FBO active in context.
-  virtual void BindBuffer(const Handle(OpenGl_Context)& theGlCtx) override
-  {
-    OpenGl_FrameBuffer::BindBuffer(theGlCtx);
-    theGlCtx->SetFrameBufferSRGB(true, false);
-  }
-
-  //! Make this FBO as drawing target in context.
-  virtual void BindDrawBuffer(const Handle(OpenGl_Context)& theGlCtx) override
-  {
-    OpenGl_FrameBuffer::BindDrawBuffer(theGlCtx);
-    theGlCtx->SetFrameBufferSRGB(true, false);
-  }
-
-  //! Make this FBO as reading source in context.
-  virtual void BindReadBuffer(const Handle(OpenGl_Context)& theGlCtx) override
-  {
-    OpenGl_FrameBuffer::BindReadBuffer(theGlCtx);
-  }
-};
 
 // ================================================================
 // Function : OcctQQuickFramebufferViewer
@@ -433,7 +399,6 @@ void OcctQQuickFramebufferViewer::Renderer::synchronize(QQuickFramebufferObject*
     myViewer->synchronize(framebufferObject());
 }
 
-
 // ================================================================
 // Function : render
 // ================================================================
@@ -496,59 +461,36 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
 {
   // this method is called from GL rendering thread;
   // accessing GUI items is not allowed here!
+  Standard_Mutex::Sentry aLock(myViewerMutex);
+  const QQuickWindow* aQWindow = window();
   if (theFbo == nullptr || myView.IsNull())
     return;
 
-  QQuickWindow*   aQWindow   = window();
-  Aspect_Drawable aNativeWin = aQWindow != nullptr ? (Aspect_Drawable)aQWindow->winId() : 0;
-#ifdef _WIN32
-  HDC  aWglDevCtx = wglGetCurrentDC();
-  HWND aWglWin    = WindowFromDC(aWglDevCtx);
-  aNativeWin      = (Aspect_Drawable)aWglWin;
-#endif
-
-  Standard_Mutex::Sentry aLock(myViewerMutex);
-  if (myView->Window().IsNull())
+  const Aspect_Drawable aNativeWin =
+    OcctGlTools::GetGlNativeWindow(aQWindow != nullptr ? (Aspect_Drawable)aQWindow->winId() : 0);
+  const Graphic3d_Vec2i aViewSize(theFbo->size().width(), theFbo->size().height());
+  if (myView->Window().IsNull()
+   || myView->Window()->NativeHandle() != aNativeWin)
   {
     initializeGL(theFbo);
     theFbo->bind();
-  }
-  else if (myView->Window()->NativeHandle() != aNativeWin)
-  {
-    // workaround window recreation done by Qt on monitor (QScreen) disconnection
-    Message::SendWarning() << "Native window handle has changed by QQuickWindow!";
-    synchronize(theFbo);
-    return;
+    if (myView->Window().IsNull())
+      return;
   }
 
+  Graphic3d_Vec2i aViewSizeOld; myView->Window()->Size(aViewSizeOld.x(), aViewSizeOld.y());
+
   // wrap FBO created by QOpenGLFramebufferObject
-  Handle(OpenGl_Context)     aGlCtx      = OcctGlTools::GetGlContext(myView);
-  Handle(OpenGl_FrameBuffer) aDefaultFbo = aGlCtx->DefaultFrameBuffer();
-  if (aDefaultFbo.IsNull())
+  if (!OcctGlTools::InitializeGlFbo(myView))
   {
-    aDefaultFbo = new OcctQtFrameBuffer();
-    aGlCtx->SetDefaultFrameBuffer(aDefaultFbo);
-  }
-  if (!aDefaultFbo->InitWrapper(aGlCtx))
-  {
-    aDefaultFbo.Nullify();
-    Message::DefaultMessenger()->Send("Default FBO wrapper creation failed", Message_Fail);
     QMessageBox::critical(0, "Failure", "Default FBO wrapper creation failed");
     QApplication::exit(1);
     return;
   }
 
-  Graphic3d_Vec2i aViewSizeOld;
-  const Graphic3d_Vec2i        aViewSizeNew = aDefaultFbo->GetVPSize();
-  Handle(Aspect_NeutralWindow) aWindow      = Handle(Aspect_NeutralWindow)::DownCast(myView->Window());
-  aWindow->Size(aViewSizeOld.x(), aViewSizeOld.y());
+  Graphic3d_Vec2i aViewSizeNew; myView->Window()->Size(aViewSizeNew.x(), aViewSizeNew.y());
   if (aViewSizeNew != aViewSizeOld)
-  {
-    aWindow->SetSize(aViewSizeNew.x(), aViewSizeNew.y());
-    myView->MustBeResized();
-    myView->Invalidate();
     dumpGlInfo(true, false);
-  }
 
   // reset global GL state from Qt before redrawing OCCT
   OcctGlTools::ResetGlStateBeforeOcct(myView);
