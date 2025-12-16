@@ -561,14 +561,20 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
     dumpGlInfo(true, false);
   }
 
+  // reset global GL state from Qt before redrawing OCCT
+  OcctGlTools::ResetGlStateBeforeOcct(myView);
+
   // flush pending input events and redraw the viewer
   myView->InvalidateImmediate();
   AIS_ViewController::FlushViewEvents(myContext, myView, true);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-  //QQuickOpenGLUtils::resetOpenGLState()
+  // reset global GL state after OCCT before redrawing Qt
+  // (alternative to QQuickOpenGLUtils::resetOpenGLState())
+  OcctGlTools::ResetGlStateAfterOcct(myView);
+/*#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  QQuickOpenGLUtils::resetOpenGLState()
 #else
   if (aQWindow != nullptr)
     aQWindow->resetOpenGLState();
-#endif
+#endif*/
 }

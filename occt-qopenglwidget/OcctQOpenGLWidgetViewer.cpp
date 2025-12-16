@@ -480,10 +480,16 @@ void OcctQOpenGLWidgetViewer::paintGL()
 #endif
   }
 
+  // reset global GL state from Qt before redrawing OCCT
+  OcctGlTools::ResetGlStateBeforeOcct(myView);
+
   // flush pending input events and redraw the viewer
   Handle(V3d_View) aView = !myFocusView.IsNull() ? myFocusView : myView;
   aView->InvalidateImmediate();
   AIS_ViewController::FlushViewEvents(myContext, aView, true);
+
+  // reset global GL state after OCCT before redrawing Qt
+  OcctGlTools::ResetGlStateAfterOcct(myView);
 }
 
 // ================================================================
