@@ -108,35 +108,10 @@ OcctQOpenGLWidgetViewer::OcctQOpenGLWidgetViewer(QWidget* theParent)
   setUpdatesEnabled(true);
   setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
 
-  // OpenGL setup managed by Qt
-  QSurfaceFormat aGlFormat;
-  aGlFormat.setDepthBufferSize(24);
-  aGlFormat.setStencilBufferSize(8);
-  // aGlFormat.setOption (QSurfaceFormat::DebugContext, true);
-  aDriver->ChangeOptions().contextDebug = aGlFormat.testOption(QSurfaceFormat::DebugContext);
-  // aGlFormat.setOption (QSurfaceFormat::DeprecatedFunctions, true);
-  if (myIsCoreProfile)
-    aGlFormat.setVersion(4, 5);
-
-  aGlFormat.setProfile(myIsCoreProfile ? QSurfaceFormat::CoreProfile : QSurfaceFormat::CompatibilityProfile);
-
-  // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
-  /*#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
-    aGlFormat.setColorSpace(QSurfaceFormat::sRGBColorSpace);
-    setTextureFormat(GL_SRGB8_ALPHA8);
-  #else
-    Message::SendWarning("Warning! Qt 5.10+ is required for sRGB setup.\n"
-                         "Colors in 3D Viewer might look incorrect (Qt " QT_VERSION_STR " is used).\n");
-    aDriver->ChangeOptions().sRGBDisable = true;
-  #endif*/
-
-  setFormat(aGlFormat);
-
-#if defined(_WIN32)
-  // never use ANGLE on Windows, since OCCT 3D Viewer does not expect this
-  QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-  // QCoreApplication::setAttribute (Qt::AA_UseOpenGLES);
-#endif
+  // OpenGL setup managed by Qt - it is better to do this globally
+  // via QSurfaceFormat::setDefaultFormat() - see main() function
+  //const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
+  //setFormat(aGlFormat);
 }
 
 // ================================================================
@@ -191,8 +166,16 @@ void OcctQOpenGLWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
 // ================================================================
 void OcctQOpenGLWidgetViewer::initializeGL()
 {
-  const QRect           aRect = rect();
-  const Graphic3d_Vec2i aViewSize(aRect.right() - aRect.left(), aRect.bottom() - aRect.top());
+  const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
+  const QSurfaceFormat  aQtGlFormat = format();
+
+  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
+  aDriver->ChangeOptions().contextDebug      = aQtGlFormat.testOption(QSurfaceFormat::DebugContext);
+  aDriver->ChangeOptions().contextSyncDebug  = aDriver->Options().contextDebug;
+  aDriver->ChangeOptions().contextCompatible = aQtGlFormat.profile() != QSurfaceFormat::CoreProfile;
+  aDriver->ChangeOptions().buffersDeepColor  = aQtGlFormat.redBufferSize() == 10
+                                            && aQtGlFormat.greenBufferSize() == 10
+                                            && aQtGlFormat.blueBufferSize() == 10;
 
   Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
 #ifdef _WIN32
@@ -202,7 +185,7 @@ void OcctQOpenGLWidgetViewer::initializeGL()
 #endif
 
   Handle(OpenGl_Context) aGlCtx = new OpenGl_Context();
-  if (!aGlCtx->Init(myIsCoreProfile))
+  if (!aGlCtx->Init(!aDriver->Options().contextCompatible))
   {
     Message::SendFail() << "Error: OpenGl_Context is unable to wrap OpenGL context";
     QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");

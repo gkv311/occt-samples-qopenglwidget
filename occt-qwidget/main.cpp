@@ -2,6 +2,8 @@
 
 #include "OcctQWidgetViewer.h"
 
+#include "../occt-qt-tools/OcctQtTools.h"
+
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
 #include <QSurfaceFormat>
@@ -190,18 +192,9 @@ int main(int theNbArgs, char** theArgVec)
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
 
-#ifdef __APPLE__
-  // suppress Qt warning "QCocoaGLContext: Falling back to unshared context"
-  bool           isCoreProfile = true;
-  QSurfaceFormat aGlFormat;
-  aGlFormat.setDepthBufferSize(24);
-  aGlFormat.setStencilBufferSize(8);
-  if (isCoreProfile)
-    aGlFormat.setVersion(4, 5);
-
-  aGlFormat.setProfile(isCoreProfile ? QSurfaceFormat::CoreProfile : QSurfaceFormat::CompatibilityProfile);
+  // request OpenGL-compatible surface from Qt
+  const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
   QSurfaceFormat::setDefaultFormat(aGlFormat);
-#endif
 
   MyMainWindow aMainWindow;
   aMainWindow.resize(aMainWindow.sizeHint());

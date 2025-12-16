@@ -9,11 +9,16 @@
 #include <Standard_WarningsDisable.hxx>
 #include <QColor>
 #include <QMouseEvent>
+#include <QSurfaceFormat>
 #include <Standard_WarningsRestore.hxx>
 
 //! Auxiliary tools between Qt and OCCT definitions.
 namespace OcctQtTools
 {
+//! Return default Qt surface format for GL context.
+inline QSurfaceFormat qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfile theProfile = QSurfaceFormat::NoProfile,
+                                        bool theToDebug = false);
+
 //! Map QColor into Quantity_Color.
 inline Quantity_Color qtColorToOcct(const QColor& theColor)
 {
@@ -36,6 +41,48 @@ inline Aspect_VKeyFlags qtMouseModifiers2VKeys(Qt::KeyboardModifiers theModifier
 //! Map Qt key to virtual key.
 inline Aspect_VKey qtKey2VKey(int theKey);
 } // namespace OcctQtTools
+
+// ================================================================
+// Function : qtGlSurfaceFormat
+// ================================================================
+inline QSurfaceFormat OcctQtTools::qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfile theProfile,
+                                                     bool theToDebug)
+{
+  const bool isDeepColor = false;
+  QSurfaceFormat::OpenGLContextProfile aProfile = theProfile;
+  if (theProfile == QSurfaceFormat::NoProfile)
+  {
+    aProfile = QSurfaceFormat::CompatibilityProfile;
+#ifdef __APPLE__
+    // suppress Qt warning "QCocoaGLContext: Falling back to unshared context"
+    aProfile = QSurfaceFormat::CoreProfile;
+#endif
+  }
+
+  QSurfaceFormat aGlFormat;
+  if (isDeepColor)
+  {
+    aGlFormat.setRedBufferSize(10);
+    aGlFormat.setGreenBufferSize(10);
+    aGlFormat.setBlueBufferSize(10);
+    aGlFormat.setAlphaBufferSize(2);
+  }
+  aGlFormat.setDepthBufferSize(24);
+  aGlFormat.setStencilBufferSize(8);
+  aGlFormat.setProfile(theProfile);
+  if (theProfile == QSurfaceFormat::CoreProfile)
+    aGlFormat.setVersion(4, 5);
+
+  // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
+  /*#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
+    aGlFormat.setColorSpace(QSurfaceFormat::sRGBColorSpace);
+  #endif*/
+
+  if (theToDebug)
+    aGlFormat.setOption(QSurfaceFormat::DebugContext, true);
+
+  return aGlFormat;
+}
 
 // ================================================================
 // Function : qtMouseButtons2VKeys

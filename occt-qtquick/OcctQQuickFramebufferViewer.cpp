@@ -408,8 +408,16 @@ QOpenGLFramebufferObject* OcctQQuickFramebufferViewer::Renderer::createFramebuff
 {
   QOpenGLFramebufferObjectFormat aQFormat;
   aQFormat.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-  //aQFormat.setInternalTextureFormat(isSrgb ? GL_SRGB8_ALPHA8 ? GL_RGBA8);
+  //aQFormat.setInternalTextureFormat(GL_RGBA8);
   //aQFormat.setSamples(4); do not create MSAA buffer here
+
+/*#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
+  const QQuickWindow*  aQWindow = window();
+  const QSurfaceFormat aQtGlFormat = aQWindow->format();
+  if (aQtGlFormat.colorSpace() == QSurfaceFormat::sRGBColorSpace)
+    aQFormat.setInternalTextureFormat(GL_SRGB8_ALPHA8);
+#endif*/
+
   return new QOpenGLFramebufferObject(theSize, aQFormat);
 }
 
@@ -438,13 +446,10 @@ void OcctQQuickFramebufferViewer::Renderer::render()
 // ================================================================
 // Function : synchronize
 // ================================================================
-void OcctQQuickFramebufferViewer::synchronize(QOpenGLFramebufferObject* theFbo)
+void OcctQQuickFramebufferViewer::synchronize(QOpenGLFramebufferObject* )
 {
   // this method will be called from GL rendering thread while GUI thread is locked,
   // the place to sycnhronize GUI / GL rendering states
-
-  if (myView.IsNull() || myView->Window().IsNull())
-    initializeGL(theFbo);
 }
 
 // ================================================================
@@ -456,9 +461,17 @@ void OcctQQuickFramebufferViewer::initializeGL(QOpenGLFramebufferObject* theFbo)
   if (theFbo == nullptr)
     return;
 
+  const Graphic3d_Vec2i aViewSize(theFbo->size().width(), theFbo->size().height());
   const QQuickWindow*   aQWindow = window();
-  const QSize           aRect    = theFbo->size();
-  const Graphic3d_Vec2i aViewSize(aRect.width(), aRect.height());
+  const QSurfaceFormat  aQtGlFormat = aQWindow->format();
+
+  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
+  aDriver->ChangeOptions().contextDebug      = aQtGlFormat.testOption(QSurfaceFormat::DebugContext);
+  aDriver->ChangeOptions().contextSyncDebug  = aDriver->Options().contextDebug;
+  aDriver->ChangeOptions().contextCompatible = aQtGlFormat.profile() != QSurfaceFormat::CoreProfile;
+  aDriver->ChangeOptions().buffersDeepColor  = aQtGlFormat.redBufferSize() == 10
+                                            && aQtGlFormat.greenBufferSize() == 10
+                                            && aQtGlFormat.blueBufferSize() == 10;
 
   Aspect_Drawable aNativeWin = aQWindow != nullptr ? (Aspect_Drawable)aQWindow->winId() : 0;
 #ifdef _WIN32
@@ -468,7 +481,7 @@ void OcctQQuickFramebufferViewer::initializeGL(QOpenGLFramebufferObject* theFbo)
 #endif
 
   Handle(OpenGl_Context) aGlCtx = new OpenGl_Context();
-  if (!aGlCtx->Init(myIsCoreProfile))
+  if (!aGlCtx->Init(!aDriver->Options().contextCompatible))
   {
     Message::SendFail() << "Error: OpenGl_Context is unable to wrap OpenGL context";
     QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");
@@ -512,7 +525,7 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
 {
   // this method is called from GL rendering thread;
   // accessing GUI items is not allowed here!
-  if (theFbo == nullptr || myView.IsNull() || myView->Window().IsNull())
+  if (theFbo == nullptr || myView.IsNull())
     return;
 
   QQuickWindow*   aQWindow   = window();
@@ -524,7 +537,12 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
 #endif
 
   Standard_Mutex::Sentry aLock(myViewerMutex);
-  if (myView->Window()->NativeHandle() != aNativeWin)
+  if (myView->Window().IsNull())
+  {
+    initializeGL(theFbo);
+    theFbo->bind();
+  }
+  else if (myView->Window()->NativeHandle() != aNativeWin)
   {
     // workaround window recreation done by Qt on monitor (QScreen) disconnection
     Message::SendWarning() << "Native window handle has changed by QQuickWindow!";

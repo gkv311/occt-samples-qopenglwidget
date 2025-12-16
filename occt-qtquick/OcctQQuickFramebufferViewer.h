@@ -127,7 +127,6 @@ private:
   Standard_Mutex myViewerMutex;
 
   QString myGlInfo;
-  bool    myIsCoreProfile = false;
   bool    myHasTouchInput = false;
 };
 

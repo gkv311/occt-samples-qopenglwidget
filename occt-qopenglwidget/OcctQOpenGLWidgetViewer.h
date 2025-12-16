@@ -90,7 +90,6 @@ private:
   Handle(V3d_View) myFocusView;
 
   QString myGlInfo;
-  bool    myIsCoreProfile = true;
   bool    myHasTouchInput = false;
 };
 

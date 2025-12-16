@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QSurfaceFormat>
 #include <Standard_WarningsRestore.hxx>
 
 #include <OSD_Environment.hxx>
@@ -47,11 +48,15 @@ int main(int theNbArgs, char** theArgVec)
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
   //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+  // OpenGL setup managed by Qt
 #if defined(_WIN32)
   // never use ANGLE on Windows, since OCCT 3D Viewer does not expect this
   QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
   // QCoreApplication::setAttribute (Qt::AA_UseOpenGLES);
 #endif
+  const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
+  QSurfaceFormat::setDefaultFormat(aGlFormat);
 
   qmlRegisterType<OcctQQuickFramebufferViewer>("OcctQQuickFramebufferViewer", 1, 0, "OcctQQuickFramebufferViewer");
 
