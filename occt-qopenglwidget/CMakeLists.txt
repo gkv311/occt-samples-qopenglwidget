@@ -78,12 +78,12 @@ set (OpenCASCADE_LIBS TKRWMesh TKBinXCAF TKBin TKBinL TKOpenGl TKXCAF TKVCAF TKC
 
 # main project target
 add_executable (${PROJECT_NAME}
+  ../occt-qt-tools/OcctQtTools.h
+  ../occt-qt-tools/OcctGlTools.h
+  ../occt-qt-tools/OcctGlTools.cpp
   main.cpp
   OcctQOpenGLWidgetViewer.h
   OcctQOpenGLWidgetViewer.cpp
-  OcctGlTools.h
-  OcctGlTools.cpp
-  OcctQtTools.h
 )
 target_link_libraries (${PROJECT_NAME} PRIVATE ${QT_VERSION}::${QT_COMPONENT_OPENGLWIDGETS} ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
 

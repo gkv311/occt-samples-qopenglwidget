@@ -8,7 +8,7 @@
 
 #include "OcctQQuickFramebufferViewer.h"
 
-#include "OcctGlTools.h"
+#include "../occt-qt-tools/OcctGlTools.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>

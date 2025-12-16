@@ -8,8 +8,8 @@
 
 #include "OcctQOpenGLWidgetViewer.h"
 
-#include "OcctGlTools.h"
-#include "OcctQtTools.h"
+#include "../occt-qt-tools/OcctGlTools.h"
+#include "../occt-qt-tools/OcctQtTools.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>

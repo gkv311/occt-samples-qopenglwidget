@@ -3,7 +3,7 @@
 #ifndef _OcctQQuickFramebufferViewer_HeaderFile
 #define _OcctQQuickFramebufferViewer_HeaderFile
 
-#include "OcctQtTools.h"
+#include "../occt-qt-tools/OcctQtTools.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QQuickFramebufferObject>

@@ -7,7 +7,7 @@
 
 #include "OcctQWidgetViewer.h"
 
-#include "OcctQtTools.h"
+#include "../occt-qt-tools/OcctQtTools.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
