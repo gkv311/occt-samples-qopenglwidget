@@ -72,6 +72,13 @@ OcctQQuickFramebufferViewer::OcctQQuickFramebufferViewer(QQuickItem* theParent)
   //setAcceptTouchEvents(true); // necessary to recieve QTouchEvent events
   setAcceptHoverEvents(true);
   setMirrorVertically(true);
+
+  // GUI elements cannot be created from GL rendering thread - make queued connection
+  connect(this, &OcctQQuickFramebufferViewer::glCriticalError, this, [this](QString theMsg)
+  {
+    QMessageBox::critical(0, "Critical error", theMsg);
+    QApplication::exit(1);
+  }, Qt::QueuedConnection);
 }
 
 // ================================================================
@@ -437,8 +444,7 @@ void OcctQQuickFramebufferViewer::initializeGL(QOpenGLFramebufferObject* theFbo)
   const bool isFirstInit = myView->Window().IsNull();
   if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize))
   {
-    QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");
-    QApplication::exit(1);
+    Q_EMIT glCriticalError("OpenGl_Context is unable to wrap OpenGL context");
     return;
   }
 
@@ -483,8 +489,7 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
   // wrap FBO created by QOpenGLFramebufferObject
   if (!OcctGlTools::InitializeGlFbo(myView))
   {
-    QMessageBox::critical(0, "Failure", "Default FBO wrapper creation failed");
-    QApplication::exit(1);
+    Q_EMIT glCriticalError("Default FBO wrapper creation failed");
     return;
   }
 

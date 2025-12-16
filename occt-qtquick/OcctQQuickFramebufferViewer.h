@@ -72,6 +72,7 @@ public: // QML accessors
 
 signals:
   void glInfoChanged();
+  void glCriticalError(QString theMsg);
 
 protected:
   //! OpenGL renderer interface.
