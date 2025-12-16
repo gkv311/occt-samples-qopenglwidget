@@ -242,6 +242,7 @@ void OcctQOpenGLWidgetViewer::keyPressEvent(QKeyEvent* theEvent)
     case Aspect_VKey_F: {
       myView->FitAll(0.01, false);
       update();
+      theEvent->accept();
       return;
     }
   }
@@ -260,6 +261,7 @@ void OcctQOpenGLWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
   if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
     return; // skip mouse events emulated by system from screen touches
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -276,6 +278,7 @@ void OcctQOpenGLWidgetViewer::mouseReleaseEvent(QMouseEvent* theEvent)
   if (myView.IsNull())
     return;
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -295,6 +298,7 @@ void OcctQOpenGLWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
   if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
     return; // skip mouse events emulated by system from screen touches
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -311,6 +315,7 @@ void OcctQOpenGLWidgetViewer::wheelEvent(QWheelEvent* theEvent)
   if (myView.IsNull())
     return;
 
+  theEvent->accept();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
   const Graphic3d_Vec2i aPos(Graphic3d_Vec2d(theEvent->position().x(), theEvent->position().y()));
 #else

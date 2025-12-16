@@ -176,6 +176,7 @@ bool OcctQWidgetViewer::event(QEvent* theEvent)
   if (!isTouch)
     return QWidget::event(theEvent);
 
+  theEvent->accept();
   bool hasUpdates = false;
   const QTouchEvent* aQTouchEvent = static_cast<QTouchEvent*>(theEvent);
   for (const QTouchEvent::TouchPoint& aQTouch : aQTouchEvent->touchPoints())
@@ -237,6 +238,7 @@ void OcctQWidgetViewer::keyPressEvent(QKeyEvent* theEvent)
     {
       myView->FitAll(0.01, false);
       update();
+      theEvent->accept();
       return;
     }
   }
@@ -255,6 +257,7 @@ void OcctQWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
   if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
     return; // skip mouse events emulated by system from screen touches
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -271,6 +274,7 @@ void OcctQWidgetViewer::mouseReleaseEvent(QMouseEvent* theEvent)
   if (myView.IsNull())
     return;
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -290,6 +294,7 @@ void OcctQWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
   if (myHasTouchInput && theEvent->source() == Qt::MouseEventSynthesizedBySystem)
     return; // skip mouse events emulated by system from screen touches
 
+  theEvent->accept();
   const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -306,6 +311,7 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
   if (myView.IsNull())
     return;
 
+  theEvent->accept();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
   const Graphic3d_Vec2i aPos(Graphic3d_Vec2d(theEvent->position().x(), theEvent->position().y()));
 #else
