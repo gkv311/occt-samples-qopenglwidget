@@ -73,7 +73,8 @@ OcctQQuickFramebufferViewer::OcctQQuickFramebufferViewer(QQuickItem* theParent)
 #ifndef __APPLE__
   myView->ChangeRenderingParams().NbMsaaSamples = 4; // warning - affects performance
 #endif
-  myView->ChangeRenderingParams().ToShowStats    = true;
+  myView->ChangeRenderingParams().ToShowStats = true;
+  // NOLINTNEXTLINE
   myView->ChangeRenderingParams().CollectedStats = (Graphic3d_RenderingParams::PerfCounters)(
     Graphic3d_RenderingParams::PerfCounters_FrameRate | Graphic3d_RenderingParams::PerfCounters_Triangles);
 
