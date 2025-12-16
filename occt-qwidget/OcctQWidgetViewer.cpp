@@ -23,13 +23,23 @@
 #include <Message.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 
+#if !defined(__APPLE__) && !defined(_WIN32) && defined(__has_include)
+  #if __has_include(<Xw_DisplayConnection.hxx>)
+    #include <Xw_DisplayConnection.hxx>
+    #define USE_XW_DISPLAY
+  #endif
+#endif
+#ifndef USE_XW_DISPLAY
+typedef Aspect_DisplayConnection Xw_DisplayConnection;
+#endif
+
 // ================================================================
 // Function : OcctQWidgetViewer
 // ================================================================
 OcctQWidgetViewer::OcctQWidgetViewer(QWidget* theParent)
     : QWidget(theParent)
 {
-  Handle(Aspect_DisplayConnection) aDisp   = new Aspect_DisplayConnection();
+  Handle(Aspect_DisplayConnection) aDisp   = new Xw_DisplayConnection();
   Handle(OpenGl_GraphicDriver)     aDriver = new OpenGl_GraphicDriver(aDisp, false);
 
   // create viewer
