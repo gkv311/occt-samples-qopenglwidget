@@ -74,6 +74,7 @@ set (OpenCASCADE_LIBS TKRWMesh TKBinXCAF TKBin TKBinL TKOpenGl TKXCAF TKVCAF TKC
 # main project target
 add_executable (${PROJECT_NAME}
   ../occt-qt-tools/OcctQtTools.h
+  ../occt-qt-tools/OcctQtTools.cpp
   main.cpp
   OcctQWidgetViewer.h
   OcctQWidgetViewer.cpp
