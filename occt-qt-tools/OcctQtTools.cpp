@@ -49,8 +49,8 @@ QSurfaceFormat OcctQtTools::qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfi
   }
   aGlFormat.setDepthBufferSize(24);
   aGlFormat.setStencilBufferSize(8);
-  aGlFormat.setProfile(theProfile);
-  if (theProfile == QSurfaceFormat::CoreProfile)
+  aGlFormat.setProfile(aProfile);
+  if (aProfile == QSurfaceFormat::CoreProfile)
     aGlFormat.setVersion(4, 5);
 
   // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
