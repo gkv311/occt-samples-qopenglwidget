@@ -166,54 +166,25 @@ void OcctQOpenGLWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
 // ================================================================
 void OcctQOpenGLWidgetViewer::initializeGL()
 {
-  const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
-  const QSurfaceFormat  aQtGlFormat = format();
-
   Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
-  aDriver->ChangeOptions().contextDebug      = aQtGlFormat.testOption(QSurfaceFormat::DebugContext);
-  aDriver->ChangeOptions().contextSyncDebug  = aDriver->Options().contextDebug;
-  aDriver->ChangeOptions().contextCompatible = aQtGlFormat.profile() != QSurfaceFormat::CoreProfile;
-  aDriver->ChangeOptions().buffersDeepColor  = aQtGlFormat.redBufferSize() == 10
-                                            && aQtGlFormat.greenBufferSize() == 10
-                                            && aQtGlFormat.blueBufferSize() == 10;
+  OcctQtTools::qtGlCapsFromSurfaceFormat(aDriver->ChangeOptions(), format());
 
-  Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
-#ifdef _WIN32
-  HDC  aWglDevCtx = wglGetCurrentDC();
-  HWND aWglWin    = WindowFromDC(aWglDevCtx);
-  aNativeWin      = (Aspect_Drawable)aWglWin;
-#endif
+  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+  const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
 
-  Handle(OpenGl_Context) aGlCtx = new OpenGl_Context();
-  if (!aGlCtx->Init(!aDriver->Options().contextCompatible))
+  const bool isFirstInit = myView->Window().IsNull();
+  if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize))
   {
-    Message::SendFail() << "Error: OpenGl_Context is unable to wrap OpenGL context";
     QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");
     QApplication::exit(1);
     return;
   }
 
-  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(myView->Window());
-  if (!aWindow.IsNull())
+  dumpGlInfo(true, true);
+  if (isFirstInit)
   {
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(aViewSize.x(), aViewSize.y());
-    myView->SetWindow(aWindow, aGlCtx->RenderingContext());
-    dumpGlInfo(true, true);
-  }
-  else
-  {
-    aWindow = new Aspect_NeutralWindow();
-    aWindow->SetVirtual(true);
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(aViewSize.x(), aViewSize.y());
-    myView->SetWindow(aWindow, aGlCtx->RenderingContext());
-    dumpGlInfo(true, true);
-
     myContext->Display(myViewCube, 0, 0, false);
-  }
 
-  {
     // dummy shape for testing
     TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
     Handle(AIS_Shape) aShape = new AIS_Shape(aBox);

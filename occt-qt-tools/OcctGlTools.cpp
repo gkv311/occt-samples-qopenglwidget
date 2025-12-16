@@ -1,7 +1,12 @@
 // Copyright (c) 2023 Kirill Gavrilov
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "OcctGlTools.h"
 
+#include <Aspect_NeutralWindow.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <OpenGl_GlCore20.hxx>
 #include <OpenGl_FrameBuffer.hxx>
@@ -15,6 +20,46 @@ Handle(OpenGl_Context) OcctGlTools::GetGlContext(const Handle(V3d_View)& theView
 {
   Handle(OpenGl_View) aGlView = Handle(OpenGl_View)::DownCast(theView->View());
   return aGlView->GlWindow()->GetGlContext();
+}
+
+// ================================================================
+// Function : InitializeGlWindow
+// ================================================================
+bool OcctGlTools::InitializeGlWindow(const Handle(V3d_View)& theView,
+                                     const Aspect_Drawable theNativeWin,
+                                     const Graphic3d_Vec2i& theSize)
+{
+  Aspect_Drawable aNativeWin = theNativeWin;
+#ifdef _WIN32
+  HDC  aWglDevCtx = wglGetCurrentDC();
+  HWND aWglWin = WindowFromDC(aWglDevCtx);
+  aNativeWin = (Aspect_Drawable)aWglWin;
+#endif
+
+  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(theView->Viewer()->Driver());
+  Handle(OpenGl_Context) aGlCtx = new OpenGl_Context();
+  if (!aGlCtx->Init(!aDriver->Options().contextCompatible))
+  {
+    Message::SendFail() << "Error: OpenGl_Context is unable to wrap OpenGL context";
+    return false;
+  }
+
+  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(theView->Window());
+  if (!aWindow.IsNull())
+  {
+    aWindow->SetNativeHandle(aNativeWin);
+    aWindow->SetSize(theSize.x(), theSize.y());
+    theView->SetWindow(aWindow, aGlCtx->RenderingContext());
+  }
+  else
+  {
+    aWindow = new Aspect_NeutralWindow();
+    aWindow->SetVirtual(true);
+    aWindow->SetNativeHandle(aNativeWin);
+    aWindow->SetSize(theSize.x(), theSize.y());
+    theView->SetWindow(aWindow, aGlCtx->RenderingContext());
+  }
+  return true;
 }
 
 // ================================================================

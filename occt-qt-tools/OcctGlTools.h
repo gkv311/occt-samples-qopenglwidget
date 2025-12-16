@@ -14,6 +14,10 @@ public:
   //! Return GL context.
   static Handle(OpenGl_Context) GetGlContext(const Handle(V3d_View)& theView);
 
+  static bool InitializeGlWindow(const Handle(V3d_View)& theView,
+                                 const Aspect_Drawable theNativeWin,
+                                 const Graphic3d_Vec2i& theSize);
+
   //! Cleanup up global GL state after Qt before redrawing OCCT Viewer.
   static void ResetGlStateBeforeOcct(const Handle(V3d_View)& theView);
 

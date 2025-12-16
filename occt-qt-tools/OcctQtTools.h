@@ -12,12 +12,17 @@
 #include <QSurfaceFormat>
 #include <Standard_WarningsRestore.hxx>
 
+class OpenGl_Caps;
+
 //! Auxiliary tools between Qt and OCCT definitions.
 namespace OcctQtTools
 {
 //! Return default Qt surface format for GL context.
 QSurfaceFormat qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfile theProfile = QSurfaceFormat::NoProfile,
                                  bool theToDebug = false);
+
+//! Fill in OCCT GL caps from Qt surface format.
+void qtGlCapsFromSurfaceFormat(OpenGl_Caps& theCaps, const QSurfaceFormat& theFormat);
 
 //! Map QColor into Quantity_Color.
 Quantity_Color qtColorToOcct(const QColor& theColor);

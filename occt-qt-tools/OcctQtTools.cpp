@@ -2,6 +2,8 @@
 
 #include "OcctQtTools.h"
 
+#include <OpenGl_Caps.hxx>
+
 // ================================================================
 // Function : qtColorToOcct
 // ================================================================
@@ -59,6 +61,19 @@ QSurfaceFormat OcctQtTools::qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfi
     aGlFormat.setOption(QSurfaceFormat::DebugContext, true);
 
   return aGlFormat;
+}
+
+// ================================================================
+// Function : qtGlCapsFromSurfaceFormat
+// ================================================================
+void OcctQtTools::qtGlCapsFromSurfaceFormat(OpenGl_Caps& theCaps, const QSurfaceFormat& theFormat)
+{
+  theCaps.contextDebug = theFormat.testOption(QSurfaceFormat::DebugContext);
+  theCaps.contextSyncDebug = theCaps.contextDebug;
+  theCaps.contextCompatible = theFormat.profile() != QSurfaceFormat::CoreProfile;
+  theCaps.buffersDeepColor = theFormat.redBufferSize() == 10
+                          && theFormat.greenBufferSize() == 10
+                          && theFormat.blueBufferSize() == 10;
 }
 
 // ================================================================
