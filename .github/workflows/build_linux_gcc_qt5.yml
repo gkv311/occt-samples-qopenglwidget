@@ -38,6 +38,7 @@ jobs:
       run: |
         xvfb-run --server-args="-screen 0 800x600x24" ./.github/workflows/screenshot.sh ./build/occt-qwidget/occt-qwidget-sample             ./build/occt-qwidget.png       5
         xvfb-run --server-args="-screen 0 800x600x24" ./.github/workflows/screenshot.sh ./build/occt-qopenglwidget/occt-qopenglwidget-sample ./build/occt-qopenglwidget.png 5
+        xvfb-run --server-args="-screen 0 800x600x24" ./.github/workflows/screenshot.sh ./build/occt-qtquick/occt-qtquick-sample             ./build/occt-qtquick.png       5
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
