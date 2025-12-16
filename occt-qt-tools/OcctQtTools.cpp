@@ -3,6 +3,7 @@
 #include "OcctQtTools.h"
 
 #include <OpenGl_Caps.hxx>
+#include <Standard_Version.hxx>
 
 // ================================================================
 // Function : qtColorToOcct
@@ -71,9 +72,11 @@ void OcctQtTools::qtGlCapsFromSurfaceFormat(OpenGl_Caps& theCaps, const QSurface
   theCaps.contextDebug = theFormat.testOption(QSurfaceFormat::DebugContext);
   theCaps.contextSyncDebug = theCaps.contextDebug;
   theCaps.contextCompatible = theFormat.profile() != QSurfaceFormat::CoreProfile;
+#if (OCC_VERSION_HEX >= 0x070700)
   theCaps.buffersDeepColor = theFormat.redBufferSize() == 10
                           && theFormat.greenBufferSize() == 10
                           && theFormat.blueBufferSize() == 10;
+#endif
 }
 
 // ================================================================
