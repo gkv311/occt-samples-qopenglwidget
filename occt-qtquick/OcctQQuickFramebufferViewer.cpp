@@ -433,6 +433,13 @@ void OcctQQuickFramebufferViewer::synchronize(QOpenGLFramebufferObject* )
 {
   // this method will be called from GL rendering thread while GUI thread is locked,
   // the place to sycnhronize GUI / GL rendering states
+  if (myGlBackColor.first)
+  {
+    myGlBackColor.first = false;
+    const Quantity_Color aColor = OcctQtTools::qtColorToOcct(myGlBackColor.second);
+    myView->SetBgGradientColors(aColor, Quantity_NOC_BLACK, Aspect_GradientFillMethod_Elliptical);
+    myView->Invalidate();
+  }
 }
 
 // ================================================================

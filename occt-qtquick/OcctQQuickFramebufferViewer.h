@@ -52,21 +52,12 @@ public: // QML accessors
   const QString& getGlInfo() const { return myGlInfo; }
 
   //! Return background color.
-  QColor getBackgroundColor()
-  {
-    Standard_Mutex::Sentry aLock(myViewerMutex);
-    return OcctQtTools::qtColorFromOcct(myView->BackgroundColor());
-  }
+  QColor getBackgroundColor() { return myGlBackColor.first; }
 
   //! Set background color.
   void setBackgroundColor(const QColor& theColor)
   {
-    const Quantity_Color aColor = OcctQtTools::qtColorToOcct(theColor);
-    {
-      Standard_Mutex::Sentry aLock(myViewerMutex);
-      myView->SetBgGradientColors(aColor, Quantity_NOC_BLACK, Aspect_GradientFillMethod_Elliptical);
-      myView->Invalidate();
-    }
+    myGlBackColor = std::make_pair(true, theColor);
     update();
   }
 
@@ -126,6 +117,8 @@ private:
   Handle(AIS_ViewCube)           myViewCube;
 
   Standard_Mutex myViewerMutex;
+
+  std::pair<bool, QColor> myGlBackColor = std::make_pair(false, QColor(0, 0, 0));
 
   QString myGlInfo;
   bool    myHasTouchInput = false;
