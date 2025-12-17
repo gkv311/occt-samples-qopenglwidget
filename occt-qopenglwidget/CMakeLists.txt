@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.13)
 
 project (occt-qopenglwidget-sample)
 
@@ -45,6 +45,9 @@ if (MSVC)
 endif()
 
 # Find OpenGL
+if (NOT WIN32 AND NOT APPLE)
+  set (OpenGL_GL_PREFERENCE "GLVND")
+endif()
 find_package (OpenGL REQUIRED)
 
 # Find Qt
