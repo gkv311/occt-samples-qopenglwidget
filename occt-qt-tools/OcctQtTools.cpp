@@ -39,7 +39,7 @@ void OcctQtTools::qtGlPlatformSetup()
   //
 #else
   // Qt6 tries to use Wayland platform by default, which is incompatible with OCCT depending on Xlib;
-  // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platfom xcb' argument).
+  // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platform xcb' argument).
   OSD_Environment aQpaPlat("QT_QPA_PLATFORM");
   if (aQpaPlat.Value().IsEmpty())
   {
@@ -110,7 +110,7 @@ QSurfaceFormat OcctQtTools::qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfi
   if (aProfile == QSurfaceFormat::CoreProfile)
     aGlFormat.setVersion(4, 5);
 
-  // request sRGBColorSpace colorspace to meet OCCT expectations or use OcctQtFrameBuffer fallback.
+  // request sRGBColorSpace color-space to meet OCCT expectations or use OcctQtFrameBuffer fallback.
   /*#if (QT_VERSION_MAJOR > 5) || (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 10)
     aGlFormat.setColorSpace(QSurfaceFormat::sRGBColorSpace);
   #endif*/

@@ -112,64 +112,6 @@ OcctQOpenGLWidgetViewer::~OcctQOpenGLWidgetViewer()
 }
 
 // ================================================================
-// Function : dumpGlInfo
-// ================================================================
-void OcctQOpenGLWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
-{
-  TColStd_IndexedDataMapOfStringString aGlCapsDict;
-  myView->DiagnosticInformation(aGlCapsDict,
-                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
-  TCollection_AsciiString anInfo;
-  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
-  {
-    if (!aValueIter.Value().IsEmpty())
-    {
-      if (!anInfo.IsEmpty())
-        anInfo += "\n";
-
-      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
-    }
-  }
-
-  if (theToPrint)
-    Message::SendInfo(anInfo);
-
-  myGlInfo = QString::fromUtf8(anInfo.ToCString());
-}
-
-// ================================================================
-// Function : initializeGL
-// ================================================================
-void OcctQOpenGLWidgetViewer::initializeGL()
-{
-  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
-  OcctQtTools::qtGlCapsFromSurfaceFormat(aDriver->ChangeOptions(), format());
-
-  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
-  const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
-
-  const bool isFirstInit = myView->Window().IsNull();
-  if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize, devicePixelRatioF()))
-  {
-    QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");
-    QApplication::exit(1);
-    return;
-  }
-
-  makeCurrent(); // restore Qt framebuffer
-  dumpGlInfo(true, true);
-  if (isFirstInit)
-  {
-    myContext->Display(myViewCube, 0, 0, false);
-
-    // dummy shape for testing
-    TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
-    Handle(AIS_Shape) aShape = new AIS_Shape(aBox);
-    myContext->Display(aShape, AIS_Shaded, 0, false);
-  }
-}
-
-// ================================================================
 // Function : event
 // ================================================================
 bool OcctQOpenGLWidgetViewer::event(QEvent* theEvent)
@@ -355,6 +297,87 @@ void OcctQOpenGLWidgetViewer::updateView()
 }
 
 // ================================================================
+// Function : handleViewRedraw
+// ================================================================
+void OcctQOpenGLWidgetViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx,
+                                               const Handle(V3d_View)&               theView)
+{
+  AIS_ViewController::handleViewRedraw(theCtx, theView);
+  if (myToAskNextFrame)
+    updateView(); // ask more frames for animation
+}
+
+#if (OCC_VERSION_HEX >= 0x070700)
+// ================================================================
+// Function : OnSubviewChanged
+// ================================================================
+void OcctQOpenGLWidgetViewer::OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
+                                               const Handle(V3d_View)&,
+                                               const Handle(V3d_View)& theNewView)
+{
+  myFocusView = theNewView;
+}
+#endif
+
+// ================================================================
+// Function : dumpGlInfo
+// ================================================================
+void OcctQOpenGLWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
+{
+  TColStd_IndexedDataMapOfStringString aGlCapsDict;
+  myView->DiagnosticInformation(aGlCapsDict,
+                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
+  TCollection_AsciiString anInfo;
+  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
+  {
+    if (!aValueIter.Value().IsEmpty())
+    {
+      if (!anInfo.IsEmpty())
+        anInfo += "\n";
+
+      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
+    }
+  }
+
+  if (theToPrint)
+    Message::SendInfo(anInfo);
+
+  myGlInfo = QString::fromUtf8(anInfo.ToCString());
+}
+
+// ================================================================
+// Function : initializeGL
+// ================================================================
+void OcctQOpenGLWidgetViewer::initializeGL()
+{
+  Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
+  OcctQtTools::qtGlCapsFromSurfaceFormat(aDriver->ChangeOptions(), format());
+
+  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+  const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
+
+  const bool isFirstInit = myView->Window().IsNull();
+  if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize, devicePixelRatioF()))
+  {
+    QMessageBox::critical(0, "Failure", "OpenGl_Context is unable to wrap OpenGL context");
+    QApplication::exit(1);
+    return;
+  }
+
+  makeCurrent(); // restore Qt framebuffer
+  dumpGlInfo(true, true);
+  if (isFirstInit)
+  {
+    myContext->Display(myViewCube, 0, 0, false);
+
+    // dummy shape for testing
+    TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
+    Handle(AIS_Shape) aShape = new AIS_Shape(aBox);
+    myContext->Display(aShape, AIS_Shaded, 0, false);
+  }
+}
+
+// ================================================================
 // Function : paintGL
 // ================================================================
 void OcctQOpenGLWidgetViewer::paintGL()
@@ -399,26 +422,3 @@ void OcctQOpenGLWidgetViewer::paintGL()
   // reset global GL state after OCCT before redrawing Qt
   OcctGlTools::ResetGlStateAfterOcct(myView);
 }
-
-// ================================================================
-// Function : handleViewRedraw
-// ================================================================
-void OcctQOpenGLWidgetViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx,
-                                               const Handle(V3d_View)&               theView)
-{
-  AIS_ViewController::handleViewRedraw(theCtx, theView);
-  if (myToAskNextFrame)
-    updateView(); // ask more frames for animation
-}
-
-#if (OCC_VERSION_HEX >= 0x070700)
-// ================================================================
-// Function : OnSubviewChanged
-// ================================================================
-void OcctQOpenGLWidgetViewer::OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
-                                               const Handle(V3d_View)&,
-                                               const Handle(V3d_View)& theNewView)
-{
-  myFocusView = theNewView;
-}
-#endif

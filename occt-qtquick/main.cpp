@@ -14,13 +14,13 @@
 
 int main(int theNbArgs, char** theArgVec)
 {
-  // before creaing QApplication: define platform plugin to load (e.g. xcb on Linux)
+  // before creating QApplication: define platform plugin to load (e.g. xcb on Linux)
   // and graphic driver (e.g. desktop OpenGL with desired profile/surface)
   OcctQtTools::qtGlPlatformSetup();
 
   // Qt by default will attempt offloading rendering
   // into a separate working thread (QSGRenderThread) on some systems,
-  // which requires addition of multithreading synchronization mechanism
+  // which requires addition of multi-threading synchronization mechanism
   // when dealing with OCCT 3D Viewer from GUI thread.
   // Uncomment following lines if these complexities are undesired
   // to ask Qt managing rendering from GUI thread.

@@ -73,7 +73,7 @@ OcctQWidgetViewer::OcctQWidgetViewer(QWidget* theParent)
   setAttribute(Qt::WA_PaintOnScreen);
   setAttribute(Qt::WA_NoSystemBackground);
   setAttribute(Qt::WA_NativeWindow);      // request native window for this widget to create OpenGL context
-  setAttribute(Qt::WA_AcceptTouchEvents); // necessary to recieve QTouchEvent events
+  setAttribute(Qt::WA_AcceptTouchEvents); // necessary to receive QTouchEvent events
   setMouseTracking(true);
   setBackgroundRole(QPalette::NoRole); // or NoBackground
   setFocusPolicy(Qt::StrongFocus);     // set focus policy to threat QContextMenuEvent from keyboard
@@ -97,75 +97,6 @@ OcctQWidgetViewer::~OcctQWidgetViewer()
   myViewer.Nullify();
 
   aDisp.Nullify();
-}
-
-// ================================================================
-// Function : dumpGlInfo
-// ================================================================
-void OcctQWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
-{
-  TColStd_IndexedDataMapOfStringString aGlCapsDict;
-  myView->DiagnosticInformation(aGlCapsDict,
-                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
-  TCollection_AsciiString anInfo;
-  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
-  {
-    if (!aValueIter.Value().IsEmpty())
-    {
-      if (!anInfo.IsEmpty())
-        anInfo += "\n";
-
-      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
-    }
-  }
-
-  if (theToPrint)
-    Message::SendInfo(anInfo);
-
-  myGlInfo = QString::fromUtf8(anInfo.ToCString());
-}
-
-// ================================================================
-// Function : initializeGL
-// ================================================================
-void OcctQWidgetViewer::initializeGL()
-{
-  const QRect  aRect        = rect();
-  const double aDevPixRatio = devicePixelRatioF();
-  const Graphic3d_Vec2i aViewSize(Graphic3d_Vec2d(Round((aRect.right() - aRect.left()) * aDevPixRatio),
-                                                  Round((aRect.bottom() - aRect.top()) * aDevPixRatio)));
-
-  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
-
-  Handle(OcctGlTools::OcctNeutralWindow) aWindow = Handle(OcctGlTools::OcctNeutralWindow)::DownCast(myView->Window());
-  const bool isFirstInit = aWindow.IsNull();
-  if (aWindow.IsNull())
-  {
-    aWindow = new OcctGlTools::OcctNeutralWindow();
-    aWindow->SetVirtual(true);
-  }
-  aWindow->SetNativeHandle(aNativeWin);
-  aWindow->SetSize(aViewSize.x(), aViewSize.y());
-  aWindow->SetDevicePixelRatio(aDevPixRatio);
-  myView->SetWindow(aWindow);
-  dumpGlInfo(true, true);
-#if (OCC_VERSION_HEX >= 0x070700)
-  for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
-  {
-    aSubviewIter->MustBeResized();
-    aSubviewIter->Invalidate();
-  }
-#endif
-
-  if (isFirstInit)
-  {
-    myContext->Display(myViewCube, 0, 0, false);
-
-    // dummy shape for testing
-    TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
-    Handle(AIS_Shape) aShape = new AIS_Shape(aBox);
-    myContext->Display(aShape, AIS_Shaded, 0, false);
-  }
 }
 
 // ================================================================
@@ -357,6 +288,106 @@ void OcctQWidgetViewer::updateView()
 }
 
 // ================================================================
+// Function : resizeEvent
+// ================================================================
+void OcctQWidgetViewer::resizeEvent(QResizeEvent* )
+{
+  if (!myView.IsNull())
+    myView->MustBeResized();
+}
+
+// ================================================================
+// Function : handleViewRedraw
+// ================================================================
+void OcctQWidgetViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx, const Handle(V3d_View)& theView)
+{
+  AIS_ViewController::handleViewRedraw(theCtx, theView);
+  if (myToAskNextFrame)
+    updateView(); // ask more frames for animation
+}
+
+#if (OCC_VERSION_HEX >= 0x070700)
+// ================================================================
+// Function : OnSubviewChanged
+// ================================================================
+void OcctQWidgetViewer::OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
+                                         const Handle(V3d_View)&,
+                                         const Handle(V3d_View)& theNewView)
+{
+  myFocusView = theNewView;
+}
+#endif
+
+// ================================================================
+// Function : dumpGlInfo
+// ================================================================
+void OcctQWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
+{
+  TColStd_IndexedDataMapOfStringString aGlCapsDict;
+  myView->DiagnosticInformation(aGlCapsDict,
+                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
+  TCollection_AsciiString anInfo;
+  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
+  {
+    if (!aValueIter.Value().IsEmpty())
+    {
+      if (!anInfo.IsEmpty())
+        anInfo += "\n";
+
+      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
+    }
+  }
+
+  if (theToPrint)
+    Message::SendInfo(anInfo);
+
+  myGlInfo = QString::fromUtf8(anInfo.ToCString());
+}
+
+// ================================================================
+// Function : initializeGL
+// ================================================================
+void OcctQWidgetViewer::initializeGL()
+{
+  const QRect  aRect        = rect();
+  const double aDevPixRatio = devicePixelRatioF();
+  const Graphic3d_Vec2i aViewSize(Graphic3d_Vec2d(Round((aRect.right() - aRect.left()) * aDevPixRatio),
+                                                  Round((aRect.bottom() - aRect.top()) * aDevPixRatio)));
+
+  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+
+  Handle(OcctGlTools::OcctNeutralWindow) aWindow = Handle(OcctGlTools::OcctNeutralWindow)::DownCast(myView->Window());
+  const bool isFirstInit = aWindow.IsNull();
+  if (aWindow.IsNull())
+  {
+    aWindow = new OcctGlTools::OcctNeutralWindow();
+    aWindow->SetVirtual(true);
+  }
+  aWindow->SetNativeHandle(aNativeWin);
+  aWindow->SetSize(aViewSize.x(), aViewSize.y());
+  aWindow->SetDevicePixelRatio(aDevPixRatio);
+  myView->SetWindow(aWindow);
+  dumpGlInfo(true, true);
+#if (OCC_VERSION_HEX >= 0x070700)
+  for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
+  {
+    aSubviewIter->MustBeResized();
+    aSubviewIter->Invalidate();
+  }
+#endif
+
+  if (isFirstInit)
+  {
+    myContext->Display(myViewCube, 0, 0, false);
+
+    // dummy shape for testing
+    TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
+    Handle(AIS_Shape) aShape = new AIS_Shape(aBox);
+    myContext->Display(aShape, AIS_Shaded, 0, false);
+  }
+}
+
+// ================================================================
 // Function : paintEvent
 // ================================================================
 void OcctQWidgetViewer::paintEvent(QPaintEvent* )
@@ -391,13 +422,13 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* )
       myView->Invalidate();
       dumpGlInfo(true, false);
 
-  #if (OCC_VERSION_HEX >= 0x070700)
+#if (OCC_VERSION_HEX >= 0x070700)
       for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
       {
         aSubviewIter->MustBeResized();
         aSubviewIter->Invalidate();
       }
-  #endif
+#endif
     }
   }
 
@@ -406,34 +437,3 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* )
   aView->InvalidateImmediate();
   AIS_ViewController::FlushViewEvents(myContext, aView, true);
 }
-
-// ================================================================
-// Function : resizeEvent
-// ================================================================
-void OcctQWidgetViewer::resizeEvent(QResizeEvent* )
-{
-  if (!myView.IsNull())
-    myView->MustBeResized();
-}
-
-// ================================================================
-// Function : handleViewRedraw
-// ================================================================
-void OcctQWidgetViewer::handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx, const Handle(V3d_View)& theView)
-{
-  AIS_ViewController::handleViewRedraw(theCtx, theView);
-  if (myToAskNextFrame)
-    updateView(); // ask more frames for animation
-}
-
-#if (OCC_VERSION_HEX >= 0x070700)
-// ================================================================
-// Function : OnSubviewChanged
-// ================================================================
-void OcctQWidgetViewer::OnSubviewChanged(const Handle(AIS_InteractiveContext)&,
-                                         const Handle(V3d_View)&,
-                                         const Handle(V3d_View)& theNewView)
-{
-  myFocusView = theNewView;
-}
-#endif

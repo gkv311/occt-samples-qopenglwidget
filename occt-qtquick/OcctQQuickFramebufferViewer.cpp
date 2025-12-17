@@ -79,7 +79,7 @@ OcctQQuickFramebufferViewer::OcctQQuickFramebufferViewer(QQuickItem* theParent)
 
   // QtQuick item setup
   setAcceptedMouseButtons(Qt::AllButtons);
-  //setAcceptTouchEvents(true); // necessary to recieve QTouchEvent events
+  //setAcceptTouchEvents(true); // necessary to receive QTouchEvent events
   setAcceptHoverEvents(true);
   setMirrorVertically(true);
 
@@ -110,33 +110,6 @@ OcctQQuickFramebufferViewer::~OcctQQuickFramebufferViewer()
   // make active OpenGL context created by Qt
   //makeCurrent();
   aDisp.Nullify();
-}
-
-// ================================================================
-// Function : dumpGlInfo
-// ================================================================
-void OcctQQuickFramebufferViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
-{
-  TColStd_IndexedDataMapOfStringString aGlCapsDict;
-  myView->DiagnosticInformation(aGlCapsDict,
-                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
-  TCollection_AsciiString anInfo;
-  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
-  {
-    if (!aValueIter.Value().IsEmpty())
-    {
-      if (!anInfo.IsEmpty())
-        anInfo += "\n";
-
-      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
-    }
-  }
-
-  if (theToPrint)
-    Message::SendInfo(anInfo);
-
-  myGlInfo = QString::fromUtf8(anInfo.ToCString());
-  Q_EMIT glInfoChanged();
 }
 
 // ================================================================
@@ -435,12 +408,39 @@ void OcctQQuickFramebufferViewer::Renderer::render()
 }
 
 // ================================================================
+// Function : dumpGlInfo
+// ================================================================
+void OcctQQuickFramebufferViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
+{
+  TColStd_IndexedDataMapOfStringString aGlCapsDict;
+  myView->DiagnosticInformation(aGlCapsDict,
+                                theIsBasic ? Graphic3d_DiagnosticInfo_Basic : Graphic3d_DiagnosticInfo_Complete);
+  TCollection_AsciiString anInfo;
+  for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aGlCapsDict); aValueIter.More(); aValueIter.Next())
+  {
+    if (!aValueIter.Value().IsEmpty())
+    {
+      if (!anInfo.IsEmpty())
+        anInfo += "\n";
+
+      anInfo += aValueIter.Key() + ": " + aValueIter.Value();
+    }
+  }
+
+  if (theToPrint)
+    Message::SendInfo(anInfo);
+
+  myGlInfo = QString::fromUtf8(anInfo.ToCString());
+  Q_EMIT glInfoChanged();
+}
+
+// ================================================================
 // Function : synchronize
 // ================================================================
 void OcctQQuickFramebufferViewer::synchronize(QOpenGLFramebufferObject* )
 {
   // this method will be called from GL rendering thread while GUI thread is locked,
-  // the place to sycnhronize GUI / GL rendering states
+  // the place to synchronize GUI / GL rendering states
   if (myGlBackColor.first)
   {
     myGlBackColor.first = false;

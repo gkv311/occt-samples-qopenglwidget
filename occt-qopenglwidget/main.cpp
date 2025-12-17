@@ -168,7 +168,7 @@ private:
 
 int main(int theNbArgs, char** theArgVec)
 {
-  // before creaing QApplication: define platform plugin to load (e.g. xcb on Linux)
+  // before creating QApplication: define platform plugin to load (e.g. xcb on Linux)
   // and graphic driver (e.g. desktop OpenGL with desired profile/surface)
   OcctQtTools::qtGlPlatformSetup();
   QApplication aQApp(theNbArgs, theArgVec);
