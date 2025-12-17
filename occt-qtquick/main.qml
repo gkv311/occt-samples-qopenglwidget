@@ -22,15 +22,15 @@ ApplicationWindow {
     focus: true // to accept keyboard events
   }
 
-  // Main menu bar (added to Qt 5.10)
+  // Main menu bar (added to Qt 5.10, QtQuick.Controls 2.3)
   /*MenuBar {
     Menu {
-	  title: qsTr("&File")
-	  MenuItem {
-	    text: qsTr("&Quit")
-		onTriggered: Qt.quit();
-	  }
-	}
+      title: qsTr("&File")
+      MenuItem {
+        text: qsTr("&Quit")
+        onTriggered: Qt.quit();
+      }
+    }
   }*/
 
   // Viewer background color slider
@@ -78,8 +78,8 @@ ApplicationWindow {
   // About sample dialog
   MessageDialog {
     id: dlg_about
-	title: qsTr("About Sample")
-	text:  qsTr("OCCT 3D Viewer sample embedded into QtQuick/QML.")
+    title: qsTr("About Sample")
+    text:  qsTr("OCCT 3D Viewer sample embedded into QtQuick/QML.")
     informativeText: "Open CASCADE Technology v." + OCC_VERSION_STRING_EXT + "\n"
                    + "Qt v." + QT_VERSION_STR + "\n"
                    + "\nOpenGL info:\n" + occt_view.glInfo;
