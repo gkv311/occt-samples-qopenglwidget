@@ -147,7 +147,11 @@ bool OcctQtTools::qtHandleHoverEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QHoverEvent* theEvent)
 {
-  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
+#else
+  const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+#endif
   const Graphic3d_Vec2i  aPnt2i(theView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = Aspect_VKeyMouse_NONE;
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -161,7 +165,11 @@ bool OcctQtTools::qtHandleMouseEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QMouseEvent* theEvent)
 {
-  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
+#else
+  const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+#endif
   const Graphic3d_Vec2i  aPnt2i(theView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
@@ -195,6 +203,32 @@ bool OcctQtTools::qtHandleTouchEvent(Aspect_WindowInputListener& theListener,
                                      const QTouchEvent* theEvent)
 {
   bool hasUpdates = false;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  for (const QTouchEvent::TouchPoint& aQTouch : theEvent->points())
+  {
+    const Standard_Size   aTouchId = aQTouch.id();
+    const Graphic3d_Vec2d aNewPos2d =
+      theView->Window()->ConvertPointToBacking(Graphic3d_Vec2d(aQTouch.position().x(), aQTouch.position().y()));
+    const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
+    if (aQTouch.state() == QEventPoint::Pressed
+     && aNewPos2i.minComp() >= 0)
+    {
+      hasUpdates = true;
+      theListener.AddTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == QEventPoint::Updated
+          && theListener.TouchPoints().Contains(aTouchId))
+    {
+      hasUpdates = true;
+      theListener.UpdateTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == QEventPoint::Released
+          && theListener.RemoveTouchPoint(aTouchId))
+    {
+      hasUpdates = true;
+    }
+  }
+#else
   for (const QTouchEvent::TouchPoint& aQTouch : theEvent->touchPoints())
   {
     const Standard_Size   aTouchId = aQTouch.id();
@@ -219,6 +253,7 @@ bool OcctQtTools::qtHandleTouchEvent(Aspect_WindowInputListener& theListener,
       hasUpdates = true;
     }
   }
+#endif
   return hasUpdates;
 }
 
