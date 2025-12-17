@@ -1,6 +1,6 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.2
-import QtQuick.Dialogs
+import QtQuick.Dialogs 1.2
 
 import OcctQQuickFramebufferViewer 1.0
 
