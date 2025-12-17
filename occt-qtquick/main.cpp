@@ -14,20 +14,9 @@
 
 int main(int theNbArgs, char** theArgVec)
 {
-#if defined(_WIN32)
-  //
-#elif defined(__APPLE__)
-  //
-#else
-  // Qt6 tries to use Wayland platform by default, which is incompatible with OCCT depending on Xlib;
-  // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platfom xcb' argument).
-  OSD_Environment aQpaPlat("QT_QPA_PLATFORM");
-  if (aQpaPlat.Value().IsEmpty())
-  {
-    aQpaPlat.SetValue("xcb");
-    aQpaPlat.Build();
-  }
-#endif
+  // before creaing QApplication: define platform plugin to load (e.g. xcb on Linux)
+  // and graphic driver (e.g. desktop OpenGL with desired profile/surface)
+  OcctQtTools::qtGlPlatformSetup();
 
   // Qt by default will attempt offloading rendering
   // into a separate working thread (QSGRenderThread) on some systems,
@@ -48,15 +37,6 @@ int main(int theNbArgs, char** theArgVec)
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
   //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
-  // OpenGL setup managed by Qt
-#if defined(_WIN32)
-  // never use ANGLE on Windows, since OCCT 3D Viewer does not expect this
-  QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-  // QCoreApplication::setAttribute (Qt::AA_UseOpenGLES);
-#endif
-  const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
-  QSurfaceFormat::setDefaultFormat(aGlFormat);
 
   qmlRegisterType<OcctQQuickFramebufferViewer>("OcctQQuickFramebufferViewer", 1, 0, "OcctQQuickFramebufferViewer");
 

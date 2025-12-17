@@ -3,7 +3,10 @@
 #include "OcctQtTools.h"
 
 #include <OpenGl_Caps.hxx>
+#include <OSD_Environment.hxx>
 #include <Standard_Version.hxx>
+
+#include <QCoreApplication>
 
 // ================================================================
 // Function : qtColorToOcct
@@ -20,6 +23,52 @@ QColor OcctQtTools::qtColorFromOcct(const Quantity_Color& theColor)
 {
   NCollection_Vec3<double> anRgb; theColor.Values(anRgb.r(), anRgb.g(), anRgb.b(), Quantity_TOC_sRGB);
   return QColor((int)Round(anRgb.r() * 255.0), (int)Round(anRgb.g() * 255.0), (int)Round(anRgb.b() * 255.0));
+}
+
+// ================================================================
+// Function : qtGlPlatformSetup
+// ================================================================
+void OcctQtTools::qtGlPlatformSetup()
+{
+#if defined(_WIN32)
+  // never use ANGLE on Windows, since OCCT 3D Viewer does not expect this;
+  // use Qt::AA_UseOpenGLES for embedded systems
+  QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+#elif defined(__APPLE__)
+  //
+#else
+  // Qt6 tries to use Wayland platform by default, which is incompatible with OCCT depending on Xlib;
+  // Force 'xcb' platform plugin (alternatively, could be passed QApplication as '-platfom xcb' argument).
+  OSD_Environment aQpaPlat("QT_QPA_PLATFORM");
+  if (aQpaPlat.Value().IsEmpty())
+  {
+    aQpaPlat.SetValue("xcb");
+    aQpaPlat.Build();
+  }
+#endif
+
+/*#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  // workaround for some bugs in Qt5
+  OSD_Environment aQGlyph("QT_ENABLE_GLYPH_CACHE_WORKAROUND");
+  if (aQGlyph.Value().IsEmpty())
+  {
+    aQGlyph.SetValue("1");
+    aQGlyph.Build();
+  }
+#endif*/
+
+  // global OpenGL setup managed by Qt
+  const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
+  QSurfaceFormat::setDefaultFormat(aGlFormat);
+
+  // ask Qt managing rendering from GUI thread instead of QSGRenderThread
+  // for QtQuick applications
+  /*OSD_Environment aQsgLoop("QSG_RENDER_LOOP");
+  if (aQsgLoop.Value().IsEmpty())
+  {
+    aQsgLoop.SetValue("basic");
+    aQsgLoop.Build();
+  }*/
 }
 
 // ================================================================

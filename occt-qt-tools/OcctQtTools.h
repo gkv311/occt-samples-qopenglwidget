@@ -17,6 +17,11 @@ class OpenGl_Caps;
 //! Auxiliary tools between Qt and OCCT definitions.
 namespace OcctQtTools
 {
+//! Perform global Qt platform setup - to be called befor QApplication creation.
+//! Defines platform plugin to load (e.g. xcb on Linux)
+//! and graphic driver (e.g. desktop OpenGL with desired profile/surface).
+void qtGlPlatformSetup();
+
 //! Return default Qt surface format for GL context.
 QSurfaceFormat qtGlSurfaceFormat(QSurfaceFormat::OpenGLContextProfile theProfile = QSurfaceFormat::NoProfile,
                                  bool theToDebug = false);
