@@ -21,7 +21,6 @@
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
-#include <Aspect_NeutralWindow.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <Message.hxx>
 #include <OpenGl_GraphicDriver.hxx>
@@ -166,7 +165,8 @@ bool OcctQQuickFramebufferViewer::event(QEvent* theEvent)
   for (const QTouchEvent::TouchPoint& aQTouch : aQTouchEvent->touchPoints())
   {
     const Standard_Size   aTouchId = aQTouch.id();
-    const Graphic3d_Vec2d aNewPos2d(aQTouch.pos().x(), aQTouch.pos().y());
+    const Graphic3d_Vec2d aNewPos2d =
+      myView->Window()->ConvertPointToBacking(Graphic3d_Vec2d(aQTouch.pos().x(), aQTouch.pos().y()));
     const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
     if (aQTouch.state() == Qt::TouchPointPressed
      && aNewPos2i.minComp() >= 0)
@@ -237,10 +237,11 @@ void OcctQQuickFramebufferViewer::mousePressEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -254,10 +255,11 @@ void OcctQQuickFramebufferViewer::mouseReleaseEvent(QMouseEvent* theEvent)
     return;
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
     updateView();
 
   // take keyboard focus on mouse click
@@ -277,10 +279,11 @@ void OcctQQuickFramebufferViewer::mouseMoveEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMousePosition(aNewPos, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMousePosition(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -295,11 +298,12 @@ void OcctQQuickFramebufferViewer::wheelEvent(QWheelEvent* theEvent)
 
   theEvent->accept();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-  const Graphic3d_Vec2i aPos(Graphic3d_Vec2d(theEvent->position().x(), theEvent->position().y()));
+  const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
-  const Graphic3d_Vec2i aPos(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
 #endif
-  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
+  const Graphic3d_Vec2i aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
+  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPnt2i, double(theEvent->angleDelta().y()) / 8.0)))
     updateView();
 }
 
@@ -337,10 +341,11 @@ void OcctQQuickFramebufferViewer::hoverMoveEvent(QHoverEvent* theEvent)
     return;
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = Aspect_VKeyMouse_NONE;
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMousePosition(aNewPos, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMousePosition(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -463,12 +468,13 @@ void OcctQQuickFramebufferViewer::initializeGL(QOpenGLFramebufferObject* theFbo)
   const Graphic3d_Vec2i aViewSize(theFbo->size().width(), theFbo->size().height());
 
   const bool isFirstInit = myView->Window().IsNull();
-  if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize))
+  if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize, aQWindow->devicePixelRatio()))
   {
     Q_EMIT glCriticalError("OpenGl_Context is unable to wrap OpenGL context");
     return;
   }
 
+  theFbo->bind();
   dumpGlInfo(true, true);
   if (isFirstInit)
   {
@@ -490,22 +496,22 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
   // accessing GUI items is not allowed here!
   Standard_Mutex::Sentry aLock(myViewerMutex);
   const QQuickWindow* aQWindow = window();
-  if (theFbo == nullptr || myView.IsNull())
+  if (theFbo == nullptr || myView.IsNull() || aQWindow == nullptr)
     return;
 
-  const Aspect_Drawable aNativeWin =
-    OcctGlTools::GetGlNativeWindow(aQWindow != nullptr ? (Aspect_Drawable)aQWindow->winId() : 0);
-  const Graphic3d_Vec2i aViewSize(theFbo->size().width(), theFbo->size().height());
+  const Aspect_Drawable aNativeWin = OcctGlTools::GetGlNativeWindow((Aspect_Drawable)aQWindow->winId());
   if (myView->Window().IsNull()
    || myView->Window()->NativeHandle() != aNativeWin)
   {
     initializeGL(theFbo);
-    theFbo->bind();
     if (myView->Window().IsNull())
       return;
   }
 
   Graphic3d_Vec2i aViewSizeOld; myView->Window()->Size(aViewSizeOld.x(), aViewSizeOld.y());
+  const double aDevPixelRatioOld = myView->Window()->DevicePixelRatio();
+  if (aDevPixelRatioOld != aQWindow->devicePixelRatio())
+    initializeGL(theFbo);
 
   // wrap FBO created by QOpenGLFramebufferObject
   if (!OcctGlTools::InitializeGlFbo(myView))
@@ -515,7 +521,7 @@ void OcctQQuickFramebufferViewer::render(QOpenGLFramebufferObject* theFbo)
   }
 
   Graphic3d_Vec2i aViewSizeNew; myView->Window()->Size(aViewSizeNew.x(), aViewSizeNew.y());
-  if (aViewSizeNew != aViewSizeOld)
+  if (aViewSizeNew != aViewSizeOld || myView->Window()->DevicePixelRatio() != aDevPixelRatioOld)
     dumpGlInfo(true, false);
 
   // reset global GL state from Qt before redrawing OCCT

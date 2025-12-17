@@ -7,6 +7,7 @@
 #include <Standard_Version.hxx>
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 
 // ================================================================
 // Function : qtColorToOcct
@@ -69,6 +70,13 @@ void OcctQtTools::qtGlPlatformSetup()
     aQsgLoop.SetValue("basic");
     aQsgLoop.Build();
   }*/
+
+  // enable auto-scaling for high-density screens
+  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#if (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 14)
+  // this is default since Qt6 (for fractional scale factors)
+  QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+#endif
 }
 
 // ================================================================

@@ -36,7 +36,6 @@ int main(int theNbArgs, char** theArgVec)
   QCoreApplication::setApplicationName("OCCT Qt/QtQuick Viewer sample");
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
-  //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
   qmlRegisterType<OcctQQuickFramebufferViewer>("OcctQQuickFramebufferViewer", 1, 0, "OcctQQuickFramebufferViewer");
 

@@ -6,7 +6,6 @@
 
 #include "OcctGlTools.h"
 
-#include <Aspect_NeutralWindow.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <OpenGl_GlCore20.hxx>
 #include <OpenGl_FrameBuffer.hxx>
@@ -74,7 +73,8 @@ Aspect_Drawable OcctGlTools::GetGlNativeWindow(Aspect_Drawable theNativeWin)
 // ================================================================
 bool OcctGlTools::InitializeGlWindow(const Handle(V3d_View)& theView,
                                      const Aspect_Drawable theNativeWin,
-                                     const Graphic3d_Vec2i& theSize)
+                                     const Graphic3d_Vec2i& theSize,
+                                     const double thePixelRatio)
 {
   const Aspect_Drawable aNativeWin = GetGlNativeWindow(theNativeWin);
 
@@ -86,21 +86,25 @@ bool OcctGlTools::InitializeGlWindow(const Handle(V3d_View)& theView,
     return false;
   }
 
-  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(theView->Window());
-  if (!aWindow.IsNull())
+  Handle(OcctNeutralWindow) aWindow = Handle(OcctNeutralWindow)::DownCast(theView->Window());
+  if (aWindow.IsNull())
   {
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(theSize.x(), theSize.y());
-    theView->SetWindow(aWindow, aGlCtx->RenderingContext());
-  }
-  else
-  {
-    aWindow = new Aspect_NeutralWindow();
+    aWindow = new OcctNeutralWindow();
     aWindow->SetVirtual(true);
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(theSize.x(), theSize.y());
-    theView->SetWindow(aWindow, aGlCtx->RenderingContext());
   }
+  aWindow->SetNativeHandle(aNativeWin);
+  aWindow->SetSize(theSize.x(), theSize.y());
+  aWindow->SetDevicePixelRatio(thePixelRatio);
+  theView->SetWindow(aWindow, aGlCtx->RenderingContext());
+  theView->MustBeResized();
+  theView->Invalidate();
+#if (OCC_VERSION_HEX >= 0x070700)
+  for (const Handle(V3d_View)& aSubviewIter : theView->Subviews())
+  {
+    aSubviewIter->MustBeResized();
+    aSubviewIter->Invalidate();
+  }
+#endif
   return true;
 }
 
@@ -124,8 +128,8 @@ bool OcctGlTools::InitializeGlFbo(const Handle(V3d_View)& theView)
   }
 
   Graphic3d_Vec2i aViewSizeOld;
-  const Graphic3d_Vec2i        aViewSizeNew = aDefaultFbo->GetVPSize();
-  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(theView->Window());
+  const Graphic3d_Vec2i aViewSizeNew = aDefaultFbo->GetVPSize();
+  Handle(OcctNeutralWindow)  aWindow = Handle(OcctNeutralWindow)::DownCast(theView->Window());
   aWindow->Size(aViewSizeOld.x(), aViewSizeOld.y());
   if (aViewSizeNew != aViewSizeOld)
   {

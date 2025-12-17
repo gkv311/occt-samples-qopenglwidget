@@ -8,6 +8,7 @@
 #include "OcctQWidgetViewer.h"
 
 #include "../occt-qt-tools/OcctQtTools.h"
+#include "../occt-qt-tools/OcctGlTools.h"
 
 #include <Standard_WarningsDisable.hxx>
 #include <QApplication>
@@ -18,7 +19,6 @@
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
-#include <Aspect_NeutralWindow.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <Message.hxx>
 #include <OpenGl_GraphicDriver.hxx>
@@ -130,31 +130,37 @@ void OcctQWidgetViewer::dumpGlInfo(bool theIsBasic, bool theToPrint)
 // ================================================================
 void OcctQWidgetViewer::initializeGL()
 {
-  const QRect           aRect = rect();
-  const Graphic3d_Vec2i aViewSize(aRect.right() - aRect.left(), aRect.bottom() - aRect.top());
+  const QRect  aRect        = rect();
+  const double aDevPixRatio = devicePixelRatioF();
+  const Graphic3d_Vec2i aViewSize(Graphic3d_Vec2d(Round((aRect.right() - aRect.left()) * aDevPixRatio),
+                                                  Round((aRect.bottom() - aRect.top()) * aDevPixRatio)));
+
   const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
 
-  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(myView->Window());
-  if (!aWindow.IsNull())
+  Handle(OcctGlTools::OcctNeutralWindow) aWindow = Handle(OcctGlTools::OcctNeutralWindow)::DownCast(myView->Window());
+  const bool isFirstInit = aWindow.IsNull();
+  if (aWindow.IsNull())
   {
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(aViewSize.x(), aViewSize.y());
-    myView->SetWindow(aWindow);
-    dumpGlInfo(true, true);
-  }
-  else
-  {
-    aWindow = new Aspect_NeutralWindow();
+    aWindow = new OcctGlTools::OcctNeutralWindow();
     aWindow->SetVirtual(true);
-    aWindow->SetNativeHandle(aNativeWin);
-    aWindow->SetSize(aViewSize.x(), aViewSize.y());
-    myView->SetWindow(aWindow);
-    dumpGlInfo(true, true);
-
-    myContext->Display(myViewCube, 0, 0, false);
   }
-
+  aWindow->SetNativeHandle(aNativeWin);
+  aWindow->SetSize(aViewSize.x(), aViewSize.y());
+  aWindow->SetDevicePixelRatio(aDevPixRatio);
+  myView->SetWindow(aWindow);
+  dumpGlInfo(true, true);
+#if (OCC_VERSION_HEX >= 0x070700)
+  for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
   {
+    aSubviewIter->MustBeResized();
+    aSubviewIter->Invalidate();
+  }
+#endif
+
+  if (isFirstInit)
+  {
+    myContext->Display(myViewCube, 0, 0, false);
+
     // dummy shape for testing
     TopoDS_Shape      aBox   = BRepPrimAPI_MakeBox(100.0, 50.0, 90.0).Shape();
     Handle(AIS_Shape) aShape = new AIS_Shape(aBox);
@@ -182,7 +188,8 @@ bool OcctQWidgetViewer::event(QEvent* theEvent)
   for (const QTouchEvent::TouchPoint& aQTouch : aQTouchEvent->touchPoints())
   {
     const Standard_Size   aTouchId = aQTouch.id();
-    const Graphic3d_Vec2d aNewPos2d(aQTouch.pos().x(), aQTouch.pos().y());
+    const Graphic3d_Vec2d aNewPos2d =
+      myView->Window()->ConvertPointToBacking(Graphic3d_Vec2d(aQTouch.pos().x(), aQTouch.pos().y()));
     const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
     if (aQTouch.state() == Qt::TouchPointPressed
      && aNewPos2i.minComp() >= 0)
@@ -258,10 +265,11 @@ void OcctQWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -275,10 +283,11 @@ void OcctQWidgetViewer::mouseReleaseEvent(QMouseEvent* theEvent)
     return;
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aPnt(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -295,10 +304,11 @@ void OcctQWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2i  aNewPos(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
   const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMousePosition(aNewPos, aButtons, aFlags, false))
+  if (AIS_ViewController::UpdateMousePosition(aPnt2i, aButtons, aFlags, false))
     updateView();
 }
 
@@ -313,15 +323,16 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
 
   theEvent->accept();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-  const Graphic3d_Vec2i aPos(Graphic3d_Vec2d(theEvent->position().x(), theEvent->position().y()));
+  const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
-  const Graphic3d_Vec2i aPos(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
 #endif
+  const Graphic3d_Vec2i aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
 
 #if (OCC_VERSION_HEX >= 0x070700)
   if (!myView->Subviews().IsEmpty())
   {
-    Handle(V3d_View) aPickedView = myView->PickSubview(aPos);
+    Handle(V3d_View) aPickedView = myView->PickSubview(aPnt2i);
     if (!aPickedView.IsNull() && aPickedView != myFocusView)
     {
       // switch input focus to another subview
@@ -332,7 +343,7 @@ void OcctQWidgetViewer::wheelEvent(QWheelEvent* theEvent)
   }
 #endif
 
-  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPos, double(theEvent->angleDelta().y()) / 8.0)))
+  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPnt2i, double(theEvent->angleDelta().y()) / 8.0)))
     updateView();
 }
 
@@ -353,35 +364,41 @@ void OcctQWidgetViewer::paintEvent(QPaintEvent* )
   if (myView.IsNull() || myView->Window().IsNull())
     return;
 
-  Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
-  if (myView->Window()->NativeHandle() != aNativeWin)
+  const double aDevPixelRatioOld = myView->Window()->DevicePixelRatio();
+  const double aDevPixelRatioNew   = devicePixelRatioF();
+  if (myView->Window()->NativeHandle() != (Aspect_Drawable)winId())
   {
     // workaround window recreation done by Qt on monitor (QScreen) disconnection
     Message::SendWarning() << "Native window handle has changed by QWidget!";
     initializeGL();
-    return;
   }
-
-  const QRect     aRect = rect();
-  Graphic3d_Vec2i aViewSizeNew(aRect.right() - aRect.left(), aRect.bottom() - aRect.top());
-  Graphic3d_Vec2i aViewSizeOld;
-
-  Handle(Aspect_NeutralWindow) aWindow = Handle(Aspect_NeutralWindow)::DownCast(myView->Window());
-  aWindow->Size(aViewSizeOld.x(), aViewSizeOld.y());
-  if (aViewSizeNew != aViewSizeOld)
+  else if (aDevPixelRatioNew != aDevPixelRatioOld)
   {
-    aWindow->SetSize(aViewSizeNew.x(), aViewSizeNew.y());
-    myView->MustBeResized();
-    myView->Invalidate();
-    dumpGlInfo(true, false);
+    initializeGL();
+  }
+  else
+  {
+    Graphic3d_Vec2i aViewSizeOld; myView->Window()->Size(aViewSizeOld.x(), aViewSizeOld.y());
 
-#if (OCC_VERSION_HEX >= 0x070700)
-    for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
+    const QRect     aRect = rect();
+    Graphic3d_Vec2i aViewSizeNew(Graphic3d_Vec2d(Round((aRect.right() - aRect.left()) * aDevPixelRatioNew),
+                                                 Round((aRect.bottom() - aRect.top()) * aDevPixelRatioNew)));
+    if (aViewSizeNew != aViewSizeOld)
     {
-      aSubviewIter->MustBeResized();
-      aSubviewIter->Invalidate();
+      Handle(OcctGlTools::OcctNeutralWindow) aWindow = Handle(OcctGlTools::OcctNeutralWindow)::DownCast(myView->Window());
+      aWindow->SetSize(aViewSizeNew.x(), aViewSizeNew.y());
+      myView->MustBeResized();
+      myView->Invalidate();
+      dumpGlInfo(true, false);
+
+  #if (OCC_VERSION_HEX >= 0x070700)
+      for (const Handle(V3d_View)& aSubviewIter : myView->Subviews())
+      {
+        aSubviewIter->MustBeResized();
+        aSubviewIter->Invalidate();
+      }
+  #endif
     }
-#endif
   }
 
   // flush pending input events and redraw the viewer
