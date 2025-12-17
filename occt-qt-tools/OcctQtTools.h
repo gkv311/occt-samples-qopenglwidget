@@ -3,7 +3,7 @@
 #ifndef _OcctQtTools_HeaderFile
 #define _OcctQtTools_HeaderFile
 
-#include <Aspect_VKey.hxx>
+#include <Aspect_WindowInputListener.hxx>
 #include <Quantity_Color.hxx>
 
 #include <Standard_WarningsDisable.hxx>
@@ -13,6 +13,7 @@
 #include <Standard_WarningsRestore.hxx>
 
 class OpenGl_Caps;
+class V3d_View;
 
 //! Auxiliary tools between Qt and OCCT definitions.
 namespace OcctQtTools
@@ -43,6 +44,27 @@ Aspect_VKeyFlags qtMouseModifiers2VKeys(Qt::KeyboardModifiers theModifiers);
 
 //! Map Qt key to virtual key.
 Aspect_VKey qtKey2VKey(int theKey);
+
+//! Queue Qt mouse hover event to OCCT listener.
+bool qtHandleHoverEvent(Aspect_WindowInputListener& theListener,
+                        const Handle(V3d_View)& theView,
+                        const QHoverEvent* theEvent);
+
+//! Queue Qt mouse event to OCCT listener.
+bool qtHandleMouseEvent(Aspect_WindowInputListener& theListener,
+                        const Handle(V3d_View)& theView,
+                        const QMouseEvent* theEvent);
+
+//! Queue Qt mouse wheel event to OCCT listener.
+bool qtHandleWheelEvent(Aspect_WindowInputListener& theListener,
+                        const Handle(V3d_View)& theView,
+                        const QWheelEvent* theEvent);
+
+//! Queue Qt touch event to OCCT listener.
+bool qtHandleTouchEvent(Aspect_WindowInputListener& theListener,
+                        const Handle(V3d_View)& theView,
+                        const QTouchEvent* theEvent);
+
 } // namespace OcctQtTools
 
 #endif // _OcctQtTools_HeaderFile

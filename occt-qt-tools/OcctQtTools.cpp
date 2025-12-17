@@ -2,9 +2,11 @@
 
 #include "OcctQtTools.h"
 
+#include <Aspect_ScrollDelta.hxx>
 #include <OpenGl_Caps.hxx>
 #include <OSD_Environment.hxx>
 #include <Standard_Version.hxx>
+#include <V3d_View.hxx>
 
 #include <QCoreApplication>
 #include <QGuiApplication>
@@ -71,11 +73,13 @@ void OcctQtTools::qtGlPlatformSetup()
     aQsgLoop.Build();
   }*/
 
-  // enable auto-scaling for high-density screens
+  // enable auto-scaling for high-density screens and fractional scale factors
+  // (this is default since Qt6)
+#if (QT_VERSION_MAJOR == 5)
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#if (QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR >= 14)
-  // this is default since Qt6 (for fractional scale factors)
+#if (QT_VERSION_MINOR >= 14)
   QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+#endif
 #endif
 }
 
@@ -134,6 +138,88 @@ void OcctQtTools::qtGlCapsFromSurfaceFormat(OpenGl_Caps& theCaps, const QSurface
                           && theFormat.greenBufferSize() == 10
                           && theFormat.blueBufferSize() == 10;
 #endif
+}
+
+// ================================================================
+// Function : qtHandleHoverEvent
+// ================================================================
+bool OcctQtTools::qtHandleHoverEvent(Aspect_WindowInputListener& theListener,
+                                     const Handle(V3d_View)& theView,
+                                     const QHoverEvent* theEvent)
+{
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(theView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
+  const Aspect_VKeyMouse aButtons = Aspect_VKeyMouse_NONE;
+  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
+  return theListener.UpdateMousePosition(aPnt2i, aButtons, aFlags, false);
+}
+
+// ================================================================
+// Function : qtHandleMouseEvent
+// ================================================================
+bool OcctQtTools::qtHandleMouseEvent(Aspect_WindowInputListener& theListener,
+                                     const Handle(V3d_View)& theView,
+                                     const QMouseEvent* theEvent)
+{
+  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+  const Graphic3d_Vec2i  aPnt2i(theView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
+  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
+  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
+  if (theEvent->type() == QEvent::MouseMove)
+    return theListener.UpdateMousePosition(aPnt2i, aButtons, aFlags, false);
+
+  return theListener.UpdateMouseButtons(aPnt2i, aButtons, aFlags, false);
+}
+
+// ================================================================
+// Function : qtHandleWheelEvent
+// ================================================================
+bool OcctQtTools::qtHandleWheelEvent(Aspect_WindowInputListener& theListener,
+                                     const Handle(V3d_View)& theView,
+                                     const QWheelEvent* theEvent)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+  const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
+#else
+  const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
+#endif
+  const Graphic3d_Vec2i aPnt2i(theView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
+  return theListener.UpdateMouseScroll(Aspect_ScrollDelta(aPnt2i, double(theEvent->angleDelta().y()) / 120.0));
+}
+
+// ================================================================
+// Function : qtHandleTouchEvent
+// ================================================================
+bool OcctQtTools::qtHandleTouchEvent(Aspect_WindowInputListener& theListener,
+                                     const Handle(V3d_View)& theView,
+                                     const QTouchEvent* theEvent)
+{
+  bool hasUpdates = false;
+  for (const QTouchEvent::TouchPoint& aQTouch : theEvent->touchPoints())
+  {
+    const Standard_Size   aTouchId = aQTouch.id();
+    const Graphic3d_Vec2d aNewPos2d =
+      theView->Window()->ConvertPointToBacking(Graphic3d_Vec2d(aQTouch.pos().x(), aQTouch.pos().y()));
+    const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
+    if (aQTouch.state() == Qt::TouchPointPressed
+     && aNewPos2i.minComp() >= 0)
+    {
+      hasUpdates = true;
+      theListener.AddTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == Qt::TouchPointMoved
+          && theListener.TouchPoints().Contains(aTouchId))
+    {
+      hasUpdates = true;
+      theListener.UpdateTouchPoint(aTouchId, aNewPos2d);
+    }
+    else if (aQTouch.state() == Qt::TouchPointReleased
+          && theListener.RemoveTouchPoint(aTouchId))
+    {
+      hasUpdates = true;
+    }
+  }
+  return hasUpdates;
 }
 
 // ================================================================

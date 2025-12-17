@@ -119,44 +119,19 @@ bool OcctQOpenGLWidgetViewer::event(QEvent* theEvent)
   if (myView.IsNull())
     return QOpenGLWidget::event(theEvent);
 
-  const bool isTouch = theEvent->type() == QEvent::TouchBegin
-                    || theEvent->type() == QEvent::TouchUpdate
-                    || theEvent->type() == QEvent::TouchEnd;
-  if (!isTouch)
-    return QOpenGLWidget::event(theEvent);
-
-  bool hasUpdates = false;
-  const QTouchEvent* aQTouchEvent = static_cast<QTouchEvent*>(theEvent);
-  for (const QTouchEvent::TouchPoint& aQTouch : aQTouchEvent->touchPoints())
+  if (theEvent->type() == QEvent::TouchBegin
+   || theEvent->type() == QEvent::TouchUpdate
+   || theEvent->type() == QEvent::TouchEnd)
   {
-    const Standard_Size   aTouchId = aQTouch.id();
-    const Graphic3d_Vec2d aNewPos2d =
-      myView->Window()->ConvertPointToBacking(Graphic3d_Vec2d(aQTouch.pos().x(), aQTouch.pos().y()));
-    const Graphic3d_Vec2i aNewPos2i = Graphic3d_Vec2i(aNewPos2d + Graphic3d_Vec2d(0.5));
-    if (aQTouch.state() == Qt::TouchPointPressed
-     && aNewPos2i.minComp() >= 0)
-    {
-      hasUpdates = true;
-      AIS_ViewController::AddTouchPoint(aTouchId, aNewPos2d);
-    }
-    else if (aQTouch.state() == Qt::TouchPointMoved
-          && AIS_ViewController::TouchPoints().Contains(aTouchId))
-    {
-      hasUpdates = true;
-      AIS_ViewController::UpdateTouchPoint(aTouchId, aNewPos2d);
-    }
-    else if (aQTouch.state() == Qt::TouchPointReleased
-          && AIS_ViewController::RemoveTouchPoint(aTouchId))
-    {
-      hasUpdates = true;
-    }
+    theEvent->accept();
+    myHasTouchInput = true;
+    if (OcctQtTools::qtHandleTouchEvent(*this, myView, static_cast<QTouchEvent*>(theEvent)))
+      updateView();
+
+    return true;
   }
 
-  myHasTouchInput = true;
-  if (hasUpdates)
-    updateView();
-
-  return true;
+  return QOpenGLWidget::event(theEvent);
 }
 
 // ================================================================
@@ -205,11 +180,7 @@ void OcctQOpenGLWidgetViewer::mousePressEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
-  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
-  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
-  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
+  if (OcctQtTools::qtHandleMouseEvent(*this, myView, theEvent))
     updateView();
 }
 
@@ -223,11 +194,7 @@ void OcctQOpenGLWidgetViewer::mouseReleaseEvent(QMouseEvent* theEvent)
     return;
 
   theEvent->accept();
-  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
-  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
-  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
-  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMouseButtons(aPnt2i, aButtons, aFlags, false))
+  if (OcctQtTools::qtHandleMouseEvent(*this, myView, theEvent))
     updateView();
 }
 
@@ -244,11 +211,7 @@ void OcctQOpenGLWidgetViewer::mouseMoveEvent(QMouseEvent* theEvent)
     return; // skip mouse events emulated by system from screen touches
 
   theEvent->accept();
-  const Graphic3d_Vec2d  aPnt2d(theEvent->pos().x(), theEvent->pos().y());
-  const Graphic3d_Vec2i  aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
-  const Aspect_VKeyMouse aButtons = OcctQtTools::qtMouseButtons2VKeys(theEvent->buttons());
-  const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
-  if (AIS_ViewController::UpdateMousePosition(aPnt2i, aButtons, aFlags, false))
+  if (OcctQtTools::qtHandleMouseEvent(*this, myView, theEvent))
     updateView();
 }
 
@@ -262,14 +225,14 @@ void OcctQOpenGLWidgetViewer::wheelEvent(QWheelEvent* theEvent)
     return;
 
   theEvent->accept();
+
+#if (OCC_VERSION_HEX >= 0x070700)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
   const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
   const Graphic3d_Vec2d aPnt2d(theEvent->pos().x(), theEvent->pos().y());
 #endif
   const Graphic3d_Vec2i aPnt2i(myView->Window()->ConvertPointToBacking(aPnt2d) + Graphic3d_Vec2d(0.5));
-
-#if (OCC_VERSION_HEX >= 0x070700)
   if (!myView->Subviews().IsEmpty())
   {
     Handle(V3d_View) aPickedView = myView->PickSubview(aPnt2i);
@@ -283,7 +246,7 @@ void OcctQOpenGLWidgetViewer::wheelEvent(QWheelEvent* theEvent)
   }
 #endif
 
-  if (AIS_ViewController::UpdateZoom(Aspect_ScrollDelta(aPnt2i, double(theEvent->angleDelta().y()) / 8.0)))
+  if (OcctQtTools::qtHandleWheelEvent(*this, myView, theEvent))
     updateView();
 }
 
