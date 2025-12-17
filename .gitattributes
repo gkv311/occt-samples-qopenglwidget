@@ -1,4 +1,5 @@
 *.yml          eol=lf
+*.qml          eol=lf
 *.htm          eol=lf
 *.html         eol=lf
 *.js           eol=lf
