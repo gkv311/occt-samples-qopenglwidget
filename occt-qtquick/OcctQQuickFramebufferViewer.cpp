@@ -259,6 +259,9 @@ void OcctQQuickFramebufferViewer::mouseReleaseEvent(QMouseEvent* theEvent)
   const Aspect_VKeyFlags aFlags = OcctQtTools::qtMouseModifiers2VKeys(theEvent->modifiers());
   if (AIS_ViewController::UpdateMouseButtons(aPnt, aButtons, aFlags, false))
     updateView();
+
+  // take keyboard focus on mouse click
+  setFocus(true);
 }
 
 // ================================================================
