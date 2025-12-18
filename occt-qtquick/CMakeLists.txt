@@ -86,7 +86,8 @@ add_executable (${PROJECT_NAME}
   ../occt-qt-tools/OcctGlTools.h
   ../occt-qt-tools/OcctGlTools.cpp
   main.cpp
-  main.qml
+  main5.qml
+  main6.qml
   OcctQQuickFramebufferViewer.h
   OcctQQuickFramebufferViewer.cpp
   occt-qtquick.qrc

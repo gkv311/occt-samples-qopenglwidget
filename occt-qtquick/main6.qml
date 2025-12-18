@@ -1,8 +1,9 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.2
+// sample for Qt6
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
 
-import OcctQQuickFramebufferViewer 1.0
+import OcctQQuickFramebufferViewer
 
 // Sample application window
 ApplicationWindow {
@@ -22,8 +23,8 @@ ApplicationWindow {
     focus: true // to accept keyboard events
   }
 
-  // Main menu bar (added to Qt 5.10, QtQuick.Controls 2.3)
-  /*MenuBar {
+  // Main menu bar
+  MenuBar {
     Menu {
       title: qsTr("&File")
       MenuItem {
@@ -31,7 +32,7 @@ ApplicationWindow {
         onTriggered: Qt.quit();
       }
     }
-  }*/
+  }
 
   // Viewer background color slider
   Slider {

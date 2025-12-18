@@ -42,6 +42,10 @@ int main(int theNbArgs, char** theArgVec)
   QQmlApplicationEngine aQmlEngine;
   aQmlEngine.rootContext()->setContextProperty("QT_VERSION_STR", QString(QT_VERSION_STR));
   aQmlEngine.rootContext()->setContextProperty("OCC_VERSION_STRING_EXT", QString(OCC_VERSION_STRING_EXT));
-  aQmlEngine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+#if (QT_VERSION_MAJOR >= 6)
+  aQmlEngine.load(QUrl(QStringLiteral("qrc:/main6.qml")));
+#else
+  aQmlEngine.load(QUrl(QStringLiteral("qrc:/main5.qml")));
+#endif
   return aQApp.exec();
 }
