@@ -8,8 +8,10 @@
 #include <Standard_Version.hxx>
 #include <V3d_View.hxx>
 
+#include <Standard_WarningsDisable.hxx>
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <Standard_WarningsRestore.hxx>
 
 // ================================================================
 // Function : qtColorToOcct
