@@ -316,7 +316,7 @@ void OcctQOpenGLWidgetViewer::initializeGL()
   Handle(OpenGl_GraphicDriver) aDriver = Handle(OpenGl_GraphicDriver)::DownCast(myViewer->Driver());
   OcctQtTools::qtGlCapsFromSurfaceFormat(aDriver->ChangeOptions(), format());
 
-  const Aspect_Drawable aNativeWin = (Aspect_Drawable)winId();
+  const Aspect_Drawable aNativeWin = (Aspect_Drawable)effectiveWinId();
   const Graphic3d_Vec2i aViewSize(rect().right() - rect().left(), rect().bottom() - rect().top());
 
   const bool isFirstInit = myView->Window().IsNull();
@@ -349,7 +349,7 @@ void OcctQOpenGLWidgetViewer::paintGL()
     return;
 
   const double aDevPixelRatioOld = myView->Window()->DevicePixelRatio();
-  if (myView->Window()->NativeHandle() != OcctGlTools::GetGlNativeWindow((Aspect_Drawable)winId()))
+  if (myView->Window()->NativeHandle() != OcctGlTools::GetGlNativeWindow((Aspect_Drawable)effectiveWinId()))
   {
     // workaround window recreation done by Qt on monitor (QScreen) disconnection
     Message::SendWarning() << "Native window handle has changed by QOpenGLWidget!";
