@@ -421,13 +421,14 @@ void OcctQQuickFramebufferViewer::initializeGL(QOpenGLFramebufferObject* theFbo)
   const Graphic3d_Vec2i aViewSize(theFbo->size().width(), theFbo->size().height());
 
   const bool isFirstInit = myView->Window().IsNull();
+  theFbo->bindDefault(); // initialize OpenGl_Context with default (window) FBO
   if (!OcctGlTools::InitializeGlWindow(myView, aNativeWin, aViewSize, aQWindow->devicePixelRatio()))
   {
     Q_EMIT glCriticalError("OpenGl_Context is unable to wrap OpenGL context");
     return;
   }
 
-  theFbo->bind();
+  theFbo->bind(); // rebind offscreen FBO
   dumpGlInfo(true, true);
   if (isFirstInit)
   {
