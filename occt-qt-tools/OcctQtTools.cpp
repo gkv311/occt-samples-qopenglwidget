@@ -149,6 +149,9 @@ bool OcctQtTools::qtHandleHoverEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QHoverEvent* theEvent)
 {
+  if (theView->Window().IsNull())
+    return false;
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
@@ -167,6 +170,9 @@ bool OcctQtTools::qtHandleMouseEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QMouseEvent* theEvent)
 {
+  if (theView->Window().IsNull())
+    return false;
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
@@ -188,6 +194,9 @@ bool OcctQtTools::qtHandleWheelEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QWheelEvent* theEvent)
 {
+  if (theView->Window().IsNull())
+    return false;
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
   const Graphic3d_Vec2d aPnt2d(theEvent->position().x(), theEvent->position().y());
 #else
@@ -204,6 +213,9 @@ bool OcctQtTools::qtHandleTouchEvent(Aspect_WindowInputListener& theListener,
                                      const Handle(V3d_View)& theView,
                                      const QTouchEvent* theEvent)
 {
+  if (theView->Window().IsNull())
+    return false;
+
   bool hasUpdates = false;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   for (const QTouchEvent::TouchPoint& aQTouch : theEvent->points())
