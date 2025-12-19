@@ -3,6 +3,7 @@
 #include "OcctQtTools.h"
 
 #include <Aspect_ScrollDelta.hxx>
+#include <Message.hxx>
 #include <OpenGl_Caps.hxx>
 #include <OSD_Environment.hxx>
 #include <Standard_Version.hxx>
@@ -28,6 +29,88 @@ QColor OcctQtTools::qtColorFromOcct(const Quantity_Color& theColor)
 {
   NCollection_Vec3<double> anRgb; theColor.Values(anRgb.r(), anRgb.g(), anRgb.b(), Quantity_TOC_sRGB);
   return QColor((int)Round(anRgb.r() * 255.0), (int)Round(anRgb.g() * 255.0), (int)Round(anRgb.b() * 255.0));
+}
+
+// ================================================================
+// Function : qtColorToOcctRgba
+// ================================================================
+Quantity_ColorRGBA OcctQtTools::qtColorToOcctRgba(const QColor& theColor)
+{
+  return Quantity_ColorRGBA(OcctQtTools::qtColorToOcct(theColor), theColor.alpha() / 255.0f);
+}
+
+// ================================================================
+// Function : qtColorFromOcctRgba
+// ================================================================
+QColor OcctQtTools::qtColorFromOcctRgba(const Quantity_ColorRGBA& theColor)
+{
+  QColor aColor = OcctQtTools::qtColorFromOcct(theColor.GetRGB());
+  aColor.setAlpha((int)Round(theColor.Alpha() * 255.0));
+  return aColor;
+}
+
+// ================================================================
+// Function : qtStringToOcct
+// ================================================================
+TCollection_AsciiString OcctQtTools::qtStringToOcct(const QString& theText)
+{
+  return TCollection_AsciiString(theText.toUtf8().data());
+}
+
+// ================================================================
+// Function : qtStringFromOcct
+// ================================================================
+QString OcctQtTools::qtStringFromOcct(const TCollection_AsciiString& theText)
+{
+  return QString::fromUtf8(theText.ToCString());
+}
+
+// ================================================================
+// Function : qtStringToOcctExt
+// ================================================================
+TCollection_ExtendedString OcctQtTools::qtStringToOcctExt(const QString& theText)
+{
+  return TCollection_ExtendedString(theText.toUtf8().data(), true);
+}
+
+// ================================================================
+// Function : qtStringFromOcctExt
+// ================================================================
+QString OcctQtTools::qtStringFromOcctExt(const TCollection_ExtendedString& theText)
+{
+  return QString::fromUtf16(theText.ToExtString());
+}
+
+// ================================================================
+// Function : qtMsgTypeToGravity
+// ================================================================
+Message_Gravity OcctQtTools::qtMsgTypeToGravity(QtMsgType theType)
+{
+  switch (theType)
+  {
+    case QtDebugMsg: return Message_Trace;
+    case QtInfoMsg: return Message_Info;
+    case QtWarningMsg: return Message_Warning;
+    case QtCriticalMsg: return Message_Alarm;
+    case QtFatalMsg: return Message_Fail;
+    default: return Message_Fail;
+  }
+}
+
+// ================================================================
+// Function : qtMessageHandlerToOcct
+// ================================================================
+void OcctQtTools::qtMessageHandlerToOcct(QtMsgType theType,
+                                         const QMessageLogContext& theCtx,
+                                         const QString& theMsg)
+{
+  Message_Gravity aGravity = OcctQtTools::qtMsgTypeToGravity(theType);
+  if (aGravity < (int)Message_Alarm)
+    aGravity = Message_Trace; // lower gravity to trace for non-critical errors
+
+  const QString aQMsg = qFormatLogMessage(theType, theCtx, theMsg);
+  const TCollection_AsciiString aMsg = aQMsg.toUtf8().data();
+  Message::Send(aMsg, aGravity);
 }
 
 // ================================================================
@@ -83,6 +166,14 @@ void OcctQtTools::qtGlPlatformSetup()
   QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 #endif
 #endif
+
+  // redirect Qt messages to OCCT
+  /*static QtMessageHandler aDefHandler = qInstallMessageHandler([](QtMsgType theType,
+                                                                  const QMessageLogContext& theCtx,
+                                                                  const QString& theMsg){
+    OcctQtTools::qtMessageHandlerToOcct(theType, theCtx, theMsg);
+    //if (aDefHandler != nullptr) { aDefHandler(QtCriticalMsg, theCtx, theMsg); }
+  });*/
 }
 
 // ================================================================

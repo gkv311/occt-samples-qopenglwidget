@@ -9,11 +9,13 @@
 #include <QSurfaceFormat>
 #include <Standard_WarningsRestore.hxx>
 
-#include <OSD_Environment.hxx>
+#include <Message.hxx>
 #include <Standard_Version.hxx>
 
 int main(int theNbArgs, char** theArgVec)
 {
+  //Message::DefaultMessenger()->Printers().First()->SetTraceLevel(Message_Trace);
+
   // before creating QApplication: define platform plugin to load (e.g. xcb on Linux)
   // and graphic driver (e.g. desktop OpenGL with desired profile/surface)
   OcctQtTools::qtGlPlatformSetup();

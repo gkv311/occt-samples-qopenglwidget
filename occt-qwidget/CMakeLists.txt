@@ -83,6 +83,7 @@ add_executable (${PROJECT_NAME}
   OcctQWidgetViewer.h
   OcctQWidgetViewer.cpp
 )
+set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "Qt Widgets")
 target_link_libraries (${PROJECT_NAME} PRIVATE ${QT_VERSION}::Widgets ${OpenCASCADE_LIBS} ${OPENGL_LIBRARIES})
 
 # auxiliary development environment

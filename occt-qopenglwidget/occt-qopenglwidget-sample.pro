@@ -5,13 +5,15 @@ CONFIG += console
 
 # source code of the sample
 HEADERS = OcctQOpenGLWidgetViewer.h \
-          OcctGlTools.h
+  ../occt-qt-tools/OcctQtTools.h
+  ../occt-qt-tools/OcctGlTools.h
 SOURCES = main.cpp \
-          OcctQOpenGLWidgetViewer.cpp \
-          OcctGlTools.cpp
-OTHER_FILES = LICENSE.md\
-              ReadMe.md \
-              custom.pri.template
+  OcctQOpenGLWidgetViewer.cpp \
+  ../occt-qt-tools/OcctQtTools.cpp \
+  ../occt-qt-tools/OcctGlTools.cpp
+OTHER_FILES = ../LICENSE.md\
+  ../ReadMe.md \
+  custom.pri.template
 
 # target configuration
 MY_TARGET_ABI = $${QMAKE_TARGET.arch}

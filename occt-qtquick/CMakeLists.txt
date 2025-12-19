@@ -92,6 +92,7 @@ add_executable (${PROJECT_NAME}
   OcctQQuickFramebufferViewer.cpp
   occt-qtquick.qrc
 )
+set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "Qt Quick")
 target_link_libraries (${PROJECT_NAME} PRIVATE
   ${Qt_LIBS}
   ${OpenCASCADE_LIBS}

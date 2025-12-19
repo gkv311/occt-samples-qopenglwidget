@@ -12,6 +12,11 @@
 #include <OpenGl_View.hxx>
 #include <OpenGl_Window.hxx>
 
+// Exporting this symbol from .exe with value=1 will direct to NVIDIA GPU on Optimus systems
+//__declspec(dllexport) DWORD NvOptimusEnablement = 1;
+// Exporting this symbol from .exe with value=1 will direct to faster GPU on AMD PowerXpress systems
+//__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+
 //! OpenGL FBO subclass for wrapping FBO created by Qt using GL_RGBA8
 //! texture format instead of GL_SRGB8_ALPHA8.
 //! This FBO is set to OpenGl_Context::SetDefaultFrameBuffer() as a final target.
