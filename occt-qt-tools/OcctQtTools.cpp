@@ -135,6 +135,10 @@ void OcctQtTools::qtGlPlatformSetup()
   }
 #endif
 
+  // request Qt to share resources between OpenGL contexts like QOpenGLWidget and QQuickWidget;
+  // allows detaching OCCT 3D Viewer widget inside QDockWidget into new top-level window
+  QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
 /*#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   // workaround for some bugs in Qt5
   OSD_Environment aQGlyph("QT_ENABLE_GLYPH_CACHE_WORKAROUND");

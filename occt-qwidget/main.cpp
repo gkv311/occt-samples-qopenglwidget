@@ -179,10 +179,6 @@ int main(int theNbArgs, char** theArgVec)
   QCoreApplication::setOrganizationName("OpenCASCADE");
   QCoreApplication::setApplicationVersion(OCC_VERSION_STRING_EXT);
 
-  // request OpenGL-compatible surface from Qt
-  const QSurfaceFormat aGlFormat = OcctQtTools::qtGlSurfaceFormat();
-  QSurfaceFormat::setDefaultFormat(aGlFormat);
-
   MyMainWindow aMainWindow;
   aMainWindow.resize(aMainWindow.sizeHint());
   aMainWindow.show();
