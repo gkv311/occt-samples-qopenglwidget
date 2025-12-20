@@ -80,6 +80,8 @@ add_executable (${PROJECT_NAME}
   ../occt-qt-tools/OcctQtTools.cpp
   ../occt-qt-tools/OcctGlTools.h
   main.cpp
+  OcctQMainWindowSample.h
+  OcctQMainWindowSample.cpp
   OcctQWidgetViewer.h
   OcctQWidgetViewer.cpp
 )

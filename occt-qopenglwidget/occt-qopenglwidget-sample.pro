@@ -4,10 +4,12 @@ greaterThan(QT_MAJOR_VERSION, 5) { QT += openglwidgets }
 CONFIG += console
 
 # source code of the sample
-HEADERS = OcctQOpenGLWidgetViewer.h \
+HEADERS = OcctQMainWindowSample.h \
+  OcctQOpenGLWidgetViewer.h \
   ../occt-qt-tools/OcctQtTools.h
   ../occt-qt-tools/OcctGlTools.h
 SOURCES = main.cpp \
+  OcctQMainWindowSample.cpp \
   OcctQOpenGLWidgetViewer.cpp \
   ../occt-qt-tools/OcctQtTools.cpp \
   ../occt-qt-tools/OcctGlTools.cpp
